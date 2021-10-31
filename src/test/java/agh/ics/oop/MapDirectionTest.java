@@ -23,13 +23,13 @@ class MapDirectionTest {
     @DisplayName("Next direction (clockwise)")
     void test_next() {
         mapDirection = mapDirection.next();
-        assertEquals(mapDirection, MapDirection.EAST);
+        assertEquals(MapDirection.EAST, mapDirection);
         mapDirection = mapDirection.next();
-        assertEquals(mapDirection, MapDirection.SOUTH);
+        assertEquals(MapDirection.SOUTH, mapDirection);
         mapDirection = mapDirection.next();
-        assertEquals(mapDirection, MapDirection.WEST);
+        assertEquals(MapDirection.WEST, mapDirection);
         mapDirection = mapDirection.next();
-        assertEquals(mapDirection, MapDirection.NORTH);
+        assertEquals(MapDirection.NORTH, mapDirection);
     }
 
     // N -> W -> S -> E -> N
@@ -37,12 +37,12 @@ class MapDirectionTest {
     @DisplayName("Previous direction (counterclockwise)")
     void text_previous() {
         mapDirection = mapDirection.previous();
-        assertEquals(mapDirection, MapDirection.WEST);
+        assertEquals(MapDirection.WEST, mapDirection);
         mapDirection = mapDirection.previous();
-        assertEquals(mapDirection, MapDirection.SOUTH);
+        assertEquals(MapDirection.SOUTH, mapDirection);
         mapDirection = mapDirection.previous();
-        assertEquals(mapDirection, MapDirection.EAST);
+        assertEquals(MapDirection.EAST, mapDirection);
         mapDirection = mapDirection.previous();
-        assertEquals(mapDirection, MapDirection.NORTH);
+        assertEquals(MapDirection.NORTH, mapDirection);
     }
 }

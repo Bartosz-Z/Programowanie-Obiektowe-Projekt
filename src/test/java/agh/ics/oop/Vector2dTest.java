@@ -9,34 +9,34 @@ class Vector2dTest {
 
     @Test
     @DisplayName("Test equals method with various objects")
-    void test_equals() {
+    void testEquals() {
         Vector2d vec = new Vector2d(0, 0);
         assertEquals(vec, vec,
                 "Test vector2d equality with itself");
-        assertEquals(vec, new Vector2d(0, 0),
+        assertEquals(new Vector2d(0, 0), vec,
                 "Test vector2d equality with it's copy");
-        assertNotEquals(vec, new Vector2d(1, 1),
+        assertNotEquals(new Vector2d(1, 1), vec,
                 "Test vector2d equality with different vector");
-        assertNotEquals(vec, new Object(),
+        assertNotEquals(new Object(), vec,
                 "Test vector2d equality with other object type");
-        assertNotEquals(vec, null,
+        assertNotEquals(null, vec,
                 "Test vector2d equality with null");
     }
 
     @Test
     @DisplayName("Test toString method")
-    void test_toString() {
-        assertEquals(new Vector2d(1, 1).toString(), "(1,1)",
+    void testToString() {
+        assertEquals("(1,1)", new Vector2d(1, 1).toString(),
                 "Test toString for both x,y positive");
-        assertEquals(new Vector2d(-1, -1).toString(), "(-1,-1)",
+        assertEquals("(-1,-1)", new Vector2d(-1, -1).toString(),
                 "Test toString for x both negative");
-        assertEquals(new Vector2d(0, 0).toString(), "(0,0)",
+        assertEquals("(0,0)", new Vector2d(0, 0).toString(),
                 "Test toString for both x,y zero");
     }
 
     @Test
     @DisplayName("Test precedes method with various 2d vectors")
-    void test_precedes() {
+    void testPrecedes() {
         Vector2d vector = new Vector2d(3, 3);
         assertTrue(vector.precedes(vector),
                 "Vector2d should precedes itself");
@@ -54,33 +54,33 @@ class Vector2dTest {
 
     @Test
     @DisplayName("Test follow method with various 2d vectors")
-    void follows() {
+    void testFollows() {
         Vector2d vector = new Vector2d(3, 3);
         assertTrue(vector.follows(vector),
-                "Vector2d should follows itself");
+                "Vector2d should follow itself");
         assertTrue(vector.follows(new Vector2d(2, 2)),
-                "Vector2d should follows other vector2d with both x,y smaller");
+                "Vector2d should follow other vector2d with both x,y smaller");
         assertTrue(vector.follows(new Vector2d(3, 2)),
-                "Vector2d should follows other vector2d with x equal, y smaller");
+                "Vector2d should follow other vector2d with x equal, y smaller");
         assertTrue(vector.follows(new Vector2d(2, 3)),
-                "Vector2d should follows other vector2d with x smaller, y equal");
+                "Vector2d should follow other vector2d with x smaller, y equal");
         assertFalse(vector.follows(new Vector2d(4, 4)),
-                "Vector2d should not follows other vector2d with both x,y greater");
+                "Vector2d should not follow other vector2d with both x,y greater");
         assertThrows(IllegalArgumentException.class, () -> vector.follows(null),
                 "Follows method should throw IllegalArgumentException when argument is null");
     }
 
     @Test
     @DisplayName("Test lowerLeft method")
-    void test_lowerLeft() {
+    void testLowerLeft() {
         Vector2d vector = new Vector2d(10, 20);
-        assertEquals(vector.lowerLeft(vector), vector,
+        assertEquals(vector, vector.lowerLeft(vector),
                 "Lower left point of 2 same vectors2d should be the same Vector2d");
-        assertEquals(vector.lowerLeft(new Vector2d(30, 35)), vector,
+        assertEquals(vector, vector.lowerLeft(new Vector2d(30, 35)),
                 "Test when one of the vectors is the result");
-        assertEquals(new Vector2d(30, 35).lowerLeft(vector), vector,
+        assertEquals(vector, new Vector2d(30, 35).lowerLeft(vector),
                 "Test commutative of lowerLeft method");
-        assertEquals(vector.lowerLeft(new Vector2d(15, 5)), new Vector2d(10, 5),
+        assertEquals(new Vector2d(10, 5), vector.lowerLeft(new Vector2d(15, 5)),
                 "Test when none of the vectors2d is the result");
         assertThrows(IllegalArgumentException.class, () -> vector.lowerLeft(null),
                 "LowerLeft method should throw IllegalArgumentException when argument is null");
@@ -88,15 +88,15 @@ class Vector2dTest {
 
     @Test
     @DisplayName("Test upperRight method")
-    void test_upperRight() {
+    void testUpperRight() {
         Vector2d vector = new Vector2d(20, 25);
-        assertEquals(vector.upperRight(vector), vector,
+        assertEquals(vector, vector.upperRight(vector),
                 "Upper right point of 2 same vectors2d should be the same Vector2d");
-        assertEquals(vector.upperRight(new Vector2d(15, 10)), vector,
+        assertEquals(vector, vector.upperRight(new Vector2d(15, 10)),
                 "Test when one of the vectors is the result");
-        assertEquals(new Vector2d(15, 10).upperRight(vector), vector,
+        assertEquals(vector, new Vector2d(15, 10).upperRight(vector),
                 "Test commutative of lowerLeft method");
-        assertEquals(vector.upperRight(new Vector2d(15, 30)), new Vector2d(20, 30),
+        assertEquals(new Vector2d(20, 30), vector.upperRight(new Vector2d(15, 30)),
                 "Test when none of the vectors2d is the result");
         assertThrows(IllegalArgumentException.class, () -> vector.upperRight(null),
                 "UpperRight method should throw IllegalArgumentException when argument is null");
@@ -104,9 +104,9 @@ class Vector2dTest {
 
     @Test
     @DisplayName("Test Vector2d addition")
-    void test_add() {
+    void testAdd() {
         Vector2d vector = new Vector2d(4, 12);
-        assertEquals(vector.add(new Vector2d(-3, 2)), new Vector2d(1, 14),
+        assertEquals(new Vector2d(1, 14), vector.add(new Vector2d(-3, 2)),
                 "Result Vector2d should be (x1 + x2, y1 + y2)");
         assertThrows(IllegalArgumentException.class, () -> vector.add(null),
                 "Add method should throw IllegalArgumentException when argument is null");
@@ -114,9 +114,9 @@ class Vector2dTest {
 
     @Test
     @DisplayName("Test Vector2d subtraction")
-    void test_subtract() {
+    void testSubtract() {
         Vector2d vector = new Vector2d(-9, 62);
-        assertEquals(vector.subtract(new Vector2d(41, 16)), new Vector2d(-50, 46),
+        assertEquals(new Vector2d(-50, 46), vector.subtract(new Vector2d(41, 16)),
                 "Result Vector2d should be (x1 - x2, y1 - y2)");
         assertThrows(IllegalArgumentException.class, () -> vector.subtract(null),
                 "Subtract method should throw IllegalArgumentException when argument is null");
@@ -124,11 +124,11 @@ class Vector2dTest {
 
     @Test
     @DisplayName("Test opposite method")
-    void test_opposite() {
+    void testOpposite() {
         Vector2d vector = new Vector2d(-2, 3);
-        assertEquals(vector.opposite(), new Vector2d(2, -3),
+        assertEquals(new Vector2d(2, -3), vector.opposite(),
                 "Test simple opposition");
-        assertEquals(vector.opposite().opposite(), vector,
+        assertEquals(vector, vector.opposite().opposite(),
                 "Double opposition should negate each other");
     }
 }

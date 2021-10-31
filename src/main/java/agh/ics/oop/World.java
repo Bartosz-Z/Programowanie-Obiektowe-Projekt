@@ -4,10 +4,14 @@ import java.util.Arrays;
 
 public class World {
     public static void main(String[] args) {
-        System.out.println("Start");
-        Direction[] directions = processDirections(args);
-        run(directions);
-        System.out.println("Stop");
+        OptionsParser parser = new OptionsParser();
+        MoveDirection[] moveDirections = parser.parse(args);
+
+        Animal animal = new Animal();
+        for (MoveDirection moveDirection : moveDirections)
+            animal.move(moveDirection);
+
+        System.out.println(animal);
     }
 
     private static Direction[] processDirections(String[] items) {
