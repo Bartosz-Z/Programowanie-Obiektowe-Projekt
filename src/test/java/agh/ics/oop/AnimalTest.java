@@ -17,7 +17,19 @@ class AnimalTest {
     Animal animal;
 
     @BeforeEach
-    void setUp() { animal = new Animal(); }
+    void setUp() { animal = new Animal(new RectangularMap(4, 4)); }
+
+    @Test
+    @DisplayName("Test isAt method")
+    void testIsAt() {
+        assertTrue(animal.isAt(animal.getPosition()),
+                "isAt method should return True if animal is indeed in given position.");
+        assertFalse(animal.isAt(animal.getPosition().add(new Vector2d(1, 1))),
+                "isAt method should return False if animal is not in given position.");
+
+        assertThrows(IllegalArgumentException.class, () -> animal.isAt(null),
+                "isAt method should throw IllegalArgumentException when argument is null");
+    }
 
     @Test
     @DisplayName("Test Animal orientation")
@@ -101,20 +113,17 @@ class AnimalTest {
     @Test
     @DisplayName("Check if Animal is always within map")
     void testAnimalOutOfBoundary() {
-        Function<Vector2d, Boolean> isPositionWithinMapBoundary = vector2d ->
-                vector2d.follows(new Vector2d(0, 0)) &&
-                vector2d.precedes(new Vector2d(4, 4));
         Function<Integer, Void> moveAnimalForward = numberOfSteps -> {
                 for (int i = 0; i < numberOfSteps; i++) animal.move(MoveDirection.FORWARD);
                 return null; };
 
-        assertTrue(isPositionWithinMapBoundary.apply(animal.getPosition()),
+        assertTrue(animal.map.isAccessible(animal.getPosition()),
                 "Animal should be on the map when created");
 
         //Checking north boundary
         // Moving animal 3 steps forward so: (2,2) -> (2,5)
         moveAnimalForward.apply(3);
-        assertTrue(isPositionWithinMapBoundary.apply(animal.getPosition()),
+        assertTrue(animal.map.isAccessible(animal.getPosition()),
                 "Animal should be on the map (north boundary)");
         assertTrue(animal.isAt(new Vector2d(2, 4)),
                 "Animal should be at (2,4) at this point (north boundary)");
@@ -124,7 +133,7 @@ class AnimalTest {
         animal.move(MoveDirection.RIGHT);
         // Moving animal 3 steps forward so: (2,4) -> (5,4)
         moveAnimalForward.apply(3);
-        assertTrue(isPositionWithinMapBoundary.apply(animal.getPosition()),
+        assertTrue(animal.map.isAccessible(animal.getPosition()),
                 "Animal should be on the map (east boundary)");
         assertTrue(animal.isAt(new Vector2d(4, 4)),
                 "Animal should be at (4,4) at this point (east boundary)");
@@ -134,7 +143,7 @@ class AnimalTest {
         animal.move(MoveDirection.RIGHT);
         // Moving animal 5 steps forward so: (4,4) -> (4,-1)
         moveAnimalForward.apply(5);
-        assertTrue(isPositionWithinMapBoundary.apply(animal.getPosition()),
+        assertTrue(animal.map.isAccessible(animal.getPosition()),
                 "Animal should be on the map (south boundary)");
         assertTrue(animal.isAt(new Vector2d(4, 0)),
                 "Animal should be at (4,0) at this point (south boundary)");
@@ -144,7 +153,7 @@ class AnimalTest {
         animal.move(MoveDirection.RIGHT);
         // Moving animal 5 steps forward so: (4,0) -> (-1,0)
         moveAnimalForward.apply(5);
-        assertTrue(isPositionWithinMapBoundary.apply(animal.getPosition()),
+        assertTrue(animal.map.isAccessible(animal.getPosition()),
                 "Animal should be on the map (west boundary)");
         assertTrue(animal.isAt(new Vector2d(0, 0)),
                 "Animal should be at (0,0) at this point (west boundary)");
