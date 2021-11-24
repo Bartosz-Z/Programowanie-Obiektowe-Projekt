@@ -5,13 +5,14 @@ import java.util.Arrays;
 public class World {
     public static void main(String[] args) {
         MoveDirection[] directions = new OptionsParser().parse(args);
-        IWorldMap map = new RectangularMap(10, 5);
-        MapVisualizer mapVisualizer = new MapVisualizer(map);
         Vector2d[] positions = { new Vector2d(2,2), new Vector2d(3,4) };
+
+        IWorldMap map = new GrassField(10);
+        System.out.println(map);
+
         IEngine engine = new SimulationEngine(map, directions, positions);
-        System.out.println(mapVisualizer.draw(new Vector2d(0, 0), new Vector2d(10, 5)));
         engine.run();
-        System.out.println(mapVisualizer.draw(new Vector2d(0, 0), new Vector2d(10, 5)));
+        System.out.println(map);
     }
 
     private static Direction[] processDirections(String[] items) {

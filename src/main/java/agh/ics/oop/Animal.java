@@ -1,11 +1,11 @@
 package agh.ics.oop;
 
-public class Animal {
+public class Animal extends AbstractWorldMapElement {
     public final IWorldMap map;
     private MapDirection mapDirection = MapDirection.NORTH;
-    private Vector2d position = new Vector2d(2, 2);
 
     public Animal(IWorldMap map) {
+        super(new Vector2d(2, 2));
         if (map == null)
             throw new IllegalArgumentException("'map' argument can not be null.");
 
@@ -13,23 +13,16 @@ public class Animal {
     }
 
     public Animal(IWorldMap map, Vector2d initialPosition) {
-        this(map);
-        if (initialPosition == null)
-            throw new IllegalArgumentException("'initialPosition' argument can not be null.");
+        super(initialPosition);
+        if (map == null)
+            throw new IllegalArgumentException("'map' argument can not be null.");
 
-        position = initialPosition;
+        this.map = map;
     }
 
     @Override
-    public String toString() {
-        return Character.toString(mapDirection.toString().charAt(0));
-    }
-
-    public boolean isAt(Vector2d position) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null.");
-
-        return this.position.equals(position);
+    protected char getIcon() {
+        return mapDirection.toString().charAt(0);
     }
 
     public void move(MoveDirection direction) {
@@ -54,9 +47,5 @@ public class Animal {
 
     public MapDirection getOrientation() {
         return mapDirection;
-    }
-
-    public Vector2d getPosition() {
-        return position;
     }
 }
