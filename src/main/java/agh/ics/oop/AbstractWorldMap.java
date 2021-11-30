@@ -2,8 +2,8 @@ package agh.ics.oop;
 
 import java.util.*;
 
-public abstract class AbstractWorldMap implements IWorldMap {
-    protected Map<Class<? extends AbstractWorldMapElement>, List<AbstractWorldMapElement>> worldMapElements;
+public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver {
+    protected Map<Class<? extends AbstractWorldMapElement>, Map<Vector2d, AbstractWorldMapElement>> worldMapElements;
     private final MapVisualizer mapVisualizer;
 
     protected AbstractWorldMap() {
@@ -24,23 +24,39 @@ public abstract class AbstractWorldMap implements IWorldMap {
         if (position == null)
             throw new IllegalArgumentException("'position' argument can not be null.");
 
-        for (List<AbstractWorldMapElement> elements : worldMapElements.values())
-            for (AbstractWorldMapElement element : elements)
-                if (element.isAt(position))
-                    return element;
+        for (Map<Vector2d, AbstractWorldMapElement> elements : worldMapElements.values()) {
+            AbstractWorldMapElement element = elements.get(position);
+            if (element != null)
+                return element;
+        }
         return null;
     }
 
-    public <T extends AbstractWorldMapElement> boolean place(T element) {
+    public <T extends AbstractWorldMapElement>
+    AbstractWorldMapElement objectOfClassAt(Class<T> elementClass, Vector2d position) {
+        if (position == null)
+            throw new IllegalArgumentException("'position' argument can not be null.");
+
+        Map<Vector2d, ? extends AbstractWorldMapElement> elements = worldMapElements.get(elementClass);
+        if (elements != null)
+            for (AbstractWorldMapElement element : elements.values())
+                if (element.isAt(position))
+                    return element;
+
+        return null;
+    }
+
+    public boolean place(AbstractWorldMapElement element) {
         if (element == null)
             throw new IllegalArgumentException("'element' argument can not be null.");
 
-        List<AbstractWorldMapElement> elements =
-                worldMapElements.computeIfAbsent(element.getClass(), k -> new LinkedList<>());
+        Map<Vector2d, AbstractWorldMapElement> elements =
+                worldMapElements.computeIfAbsent(element.getClass(), k -> new HashMap<>());
 
         if (!isAccessible(element.getPosition()))
             return false;
-        return elements.add(element);
+        elements.put(element.getPosition(), element);
+        return true;
     }
 
     @Override
@@ -50,8 +66,24 @@ public abstract class AbstractWorldMap implements IWorldMap {
     }
 
     public <T extends AbstractWorldMapElement>
-    List<? extends AbstractWorldMapElement> getWorldMapElements(Class<T> elementClass) {
+    Map<Vector2d, ? extends AbstractWorldMapElement> getWorldMapElements(Class<T> elementClass) {
         return worldMapElements.get(elementClass);
+    }
+
+    @Override
+    public void positionChanged(AbstractWorldMapElement element, Vector2d oldPosition, Vector2d newPosition) {
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
+        if (oldPosition == null)
+            throw new IllegalArgumentException("'oldPosition' argument can not be null.");
+        if (newPosition == null)
+            throw new IllegalArgumentException("'newPosition' argument can not be null.");
+
+        Map<Vector2d, AbstractWorldMapElement> elements = worldMapElements.get(element.getClass());
+        if (elements == null || elements.remove(oldPosition) == null)
+            throw new IllegalArgumentException("Such an element is not placed in the map.");
+
+        elements.put(newPosition, element);
     }
 
     @Override
@@ -59,10 +91,10 @@ public abstract class AbstractWorldMap implements IWorldMap {
         Vector2d lowerLeft = new Vector2d(Integer.MAX_VALUE, Integer.MAX_VALUE);
         Vector2d upperRight = new Vector2d(Integer.MIN_VALUE, Integer.MIN_VALUE);
 
-        for (List<AbstractWorldMapElement> elements : worldMapElements.values())
-            for (AbstractWorldMapElement element : elements) {
-                lowerLeft = lowerLeft.lowerLeft(element.getPosition());
-                upperRight = upperRight.upperRight(element.getPosition());
+        for (Map<Vector2d, AbstractWorldMapElement> elements : worldMapElements.values())
+            for (Vector2d elementPosition : elements.keySet()) {
+                lowerLeft = lowerLeft.lowerLeft(elementPosition);
+                upperRight = upperRight.upperRight(elementPosition);
             }
 
         return mapVisualizer.draw(lowerLeft, upperRight);

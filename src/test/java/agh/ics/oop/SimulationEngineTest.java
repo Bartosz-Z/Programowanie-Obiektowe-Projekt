@@ -10,12 +10,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SimulationEngineTest {
 
-    MoveDirection[] moveDirections = new OptionsParser().parse("f b r l f f r r f f".split(" "));
+    MoveDirection[] moveDirections = new OptionsParser().parse("f b r l f f r r f f f f".split(" "));
     Vector2d[] initialPositions = {
             new Vector2d(2,2),
             new Vector2d(3,4)
     };
-    IWorldMap map = new RectangularMap(10, 5);
+    AbstractWorldMap map = new RectangularMap(10, 5);
 
     SimulationEngine engine;
 
@@ -35,12 +35,12 @@ class SimulationEngineTest {
     void testRun() {
         engine.run();
 
-        Object animal_1 = map.objectAt(new Vector2d(2, 2));
+        Object animal_1 = map.objectAt(new Vector2d(2, 1));
         assertInstanceOf(Animal.class, animal_1,
-                "There should be an animal at position (2, 2) at this point");
-        Object animal_2 = map.objectAt(new Vector2d(3, 4));
+                "There should be an animal at position (3, 2) at this point");
+        Object animal_2 = map.objectAt(new Vector2d(3, 5));
         assertInstanceOf(Animal.class, animal_2,
-                "There should be an animal at position (3, 4) at this point");
+                "There should be an animal at position (2, 4) at this point");
 
         assertEquals(MapDirection.SOUTH, ((Animal)animal_1).getOrientation(),
                 "Animal at position (2, 2) should face south at this point");

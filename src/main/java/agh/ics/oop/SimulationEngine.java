@@ -6,7 +6,7 @@ public class SimulationEngine implements IEngine {
     private final MoveDirection[] moveDirectionsSequence;
     private final Animal[] animals;
 
-    public SimulationEngine(IWorldMap map, MoveDirection[] moveDirections, Vector2d[] initialPositions) {
+    public SimulationEngine(AbstractWorldMap map, MoveDirection[] moveDirections, Vector2d[] initialPositions) {
         if (map == null)
             throw new IllegalArgumentException("'map' argument can not be null");
         if (moveDirections == null)

@@ -15,9 +15,14 @@ class AnimalTest {
     //   S
 
     Animal animal;
+    AbstractWorldMap map;
 
     @BeforeEach
-    void setUp() { animal = new Animal(new RectangularMap(4, 4)); }
+    void setUp() {
+        map = new RectangularMap(4, 4);
+        animal = new Animal(map);
+        map.place(animal);
+    }
 
     @Test
     @DisplayName("Test isAt method")
@@ -117,13 +122,13 @@ class AnimalTest {
                 for (int i = 0; i < numberOfSteps; i++) animal.move(MoveDirection.FORWARD);
                 return null; };
 
-        assertTrue(animal.map.isAccessible(animal.getPosition()),
+        assertTrue(animal.isAt(animal.getPosition()),
                 "Animal should be on the map when created");
 
         //Checking north boundary
         // Moving animal 3 steps forward so: (2,2) -> (2,5)
         moveAnimalForward.apply(3);
-        assertTrue(animal.map.isAccessible(animal.getPosition()),
+        assertTrue(animal.isAt(animal.getPosition()),
                 "Animal should be on the map (north boundary)");
         assertTrue(animal.isAt(new Vector2d(2, 4)),
                 "Animal should be at (2,4) at this point (north boundary)");
@@ -133,7 +138,7 @@ class AnimalTest {
         animal.move(MoveDirection.RIGHT);
         // Moving animal 3 steps forward so: (2,4) -> (5,4)
         moveAnimalForward.apply(3);
-        assertTrue(animal.map.isAccessible(animal.getPosition()),
+        assertTrue(animal.isAt(animal.getPosition()),
                 "Animal should be on the map (east boundary)");
         assertTrue(animal.isAt(new Vector2d(4, 4)),
                 "Animal should be at (4,4) at this point (east boundary)");
@@ -143,7 +148,7 @@ class AnimalTest {
         animal.move(MoveDirection.RIGHT);
         // Moving animal 5 steps forward so: (4,4) -> (4,-1)
         moveAnimalForward.apply(5);
-        assertTrue(animal.map.isAccessible(animal.getPosition()),
+        assertTrue(animal.isAt(animal.getPosition()),
                 "Animal should be on the map (south boundary)");
         assertTrue(animal.isAt(new Vector2d(4, 0)),
                 "Animal should be at (4,0) at this point (south boundary)");
@@ -153,7 +158,7 @@ class AnimalTest {
         animal.move(MoveDirection.RIGHT);
         // Moving animal 5 steps forward so: (4,0) -> (-1,0)
         moveAnimalForward.apply(5);
-        assertTrue(animal.map.isAccessible(animal.getPosition()),
+        assertTrue(animal.isAt(animal.getPosition()),
                 "Animal should be on the map (west boundary)");
         assertTrue(animal.isAt(new Vector2d(0, 0)),
                 "Animal should be at (0,0) at this point (west boundary)");

@@ -32,19 +32,10 @@ public class GrassField extends AbstractWorldMap {
         if (position == null)
             throw new IllegalArgumentException("'position' argument can not be null.");
 
-        for (Map.Entry<Class<? extends AbstractWorldMapElement>, List<AbstractWorldMapElement>> entry
-                : worldMapElements.entrySet())
-            if (entry.getKey() != Grass.class)
-                for (AbstractWorldMapElement element : entry.getValue())
-                    if (element.isAt(position))
-                        return element;
+        AbstractWorldMapElement animal = objectOfClassAt(Animal.class, position);
+        if (animal != null)
+            return animal;
 
-        List<AbstractWorldMapElement> grasses = worldMapElements.get(Grass.class);
-        if (grasses != null)
-            for (AbstractWorldMapElement grass : grasses)
-                if (grass.isAt(position))
-                    return grass;
-
-        return null;
+        return objectOfClassAt(Grass.class, position);
     }
 }

@@ -5,13 +5,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class GrassFieldTest {
 
     GrassField map;
-    List<? extends AbstractWorldMapElement> grasses;
+    Map<Vector2d, ? extends AbstractWorldMapElement> grasses;
 
     @BeforeEach
     void setUp() {
@@ -31,7 +32,7 @@ class GrassFieldTest {
     @Test
     @DisplayName("Test grass position accessibility")
     void testIsAccessible() {
-        Vector2d grassPosition = grasses.get(0).getPosition();
+        Vector2d grassPosition = grasses.keySet().iterator().next();
 
         assertTrue(map.isAccessible(new Vector2d(1000, 1000)),
                 "Position at which is no grass should be accessible");
@@ -42,7 +43,7 @@ class GrassFieldTest {
     @Test
     @DisplayName("Test objectAt method")
     void testObjectAt() {
-        AbstractWorldMapElement grass = grasses.get(0);
+        AbstractWorldMapElement grass = grasses.values().iterator().next();
 
         assertEquals(grass, map.objectAt(grass.getPosition()),
                 "objectAt method should return grass at position containing that grass");
