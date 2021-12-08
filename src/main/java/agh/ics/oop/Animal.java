@@ -3,7 +3,7 @@ package agh.ics.oop;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Animal extends AbstractWorldMapElement {
+public class Animal extends AbstractWorldMapElement implements IObservable {
     public final AbstractWorldMap map;
     private MapDirection mapDirection = MapDirection.NORTH;
     private final List<IPositionChangeObserver> observers = new LinkedList<>();
@@ -14,7 +14,6 @@ public class Animal extends AbstractWorldMapElement {
             throw new IllegalArgumentException("'map' argument can not be null.");
 
         this.map = map;
-        addObserver(map);
     }
 
     public Animal(AbstractWorldMap map, Vector2d initialPosition) {
@@ -23,7 +22,6 @@ public class Animal extends AbstractWorldMapElement {
             throw new IllegalArgumentException("'map' argument can not be null.");
 
         this.map = map;
-        addObserver(map);
     }
 
     @Override
@@ -51,11 +49,13 @@ public class Animal extends AbstractWorldMapElement {
         }
     }
 
-    private void addObserver(IPositionChangeObserver observer) {
+    @Override
+    public void addObserver(IPositionChangeObserver observer) {
         observers.add(observer);
     }
 
-    private void removeObserver(IPositionChangeObserver observer) {
+    @Override
+    public void removeObserver(IPositionChangeObserver observer) {
         observers.remove(observer);
     }
 

@@ -29,10 +29,10 @@ class RectangularMapTest {
     void testPlace() {
         Animal animal = new Animal(map, new Vector2d(2, 2));
 
-        assertTrue(map.place(animal),
-                "Placing animal within empty map boundaries should return true");
-        assertFalse(map.place(new Animal(map, new Vector2d(29, 12))),
-                "Placing animal outside map should return false");
+        assertDoesNotThrow(() -> map.place(animal),
+                "Placing animal within empty map boundaries should not throw exception");
+        assertThrows(IllegalArgumentException.class, () -> map.place(new Animal(map, new Vector2d(29, 12))),
+                "Placing animal outside map should throw exception");
     }
 
     @Test

@@ -44,10 +44,10 @@ class AbstractWorldMapTest {
     void testPlace() {
         Animal animal = new Animal(map, new Vector2d(2, 2));
 
-        assertTrue(map.place(animal),
-                "Placing animal in empty map should return true");
-        assertFalse(map.place(new Animal(map, animal.getPosition())),
-                "Placing animal in the same place with another animal should return false");
+        assertDoesNotThrow(() -> map.place(animal),
+                "Placing animal in empty map should not throw exception");
+        assertThrows(IllegalArgumentException.class, () -> map.place(new Animal(map, animal.getPosition())),
+                "Placing animal in the same place with another animal should throw exception");
 
         assertThrows(IllegalArgumentException.class, () -> map.place(null),
                 "Place method should throw IllegalArgumentException when argument is null");

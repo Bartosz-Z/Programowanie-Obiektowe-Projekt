@@ -1,5 +1,8 @@
 package agh.ics.oop;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
 public abstract class AbstractWorldMapElement {
     protected Vector2d position;
 
@@ -20,7 +23,8 @@ public abstract class AbstractWorldMapElement {
     protected abstract char getIcon();
 
     @Override
-    public final String toString() {
+    @Contract(" -> new")
+    public final @NotNull String toString() {
         return Character.toString(getIcon());
     }
 

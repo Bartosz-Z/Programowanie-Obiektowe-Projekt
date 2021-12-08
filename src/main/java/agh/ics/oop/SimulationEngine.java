@@ -16,7 +16,10 @@ public class SimulationEngine implements IEngine {
 
         animals = Arrays.stream(initialPositions)
                 .map(position -> new Animal(map, position))
-                .filter(map::place)
+                .filter(element -> {
+                    map.place(element);
+                    return true;
+                })
                 .toArray(Animal[]::new);
 
         moveDirectionsSequence = moveDirections;

@@ -1,5 +1,8 @@
 package agh.ics.oop;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
 public enum MapDirection {
     NORTH,
     SOUTH,
@@ -13,7 +16,7 @@ public enum MapDirection {
             case SOUTH -> { return WEST; }
             case WEST -> { return NORTH; }
         }
-        return null;
+        throw new UnsupportedOperationException("'" + this + "' is not implemented.");
     }
 
     public MapDirection previous() {
@@ -23,27 +26,30 @@ public enum MapDirection {
             case SOUTH -> { return EAST; }
             case WEST -> { return SOUTH; }
         }
-        return null;
+        throw new UnsupportedOperationException("'" + this + "' is not implemented.");
     }
 
-    public Vector2d toUnitVector() {
+    @Contract(" -> new")
+    public @NotNull Vector2d toUnitVector() {
         switch (this) {
             case NORTH -> { return new Vector2d(0, 1); }
             case SOUTH -> { return new Vector2d(0, -1); }
             case WEST -> { return new Vector2d(-1, 0); }
             case EAST -> { return new Vector2d(1, 0); }
         }
-        return null;
+        throw new UnsupportedOperationException("'" + this + "' is not implemented.");
     }
 
+
     @Override
-    public String toString() {
+    @Contract(pure = true)
+    public @NotNull String toString() {
         switch (this) {
             case NORTH -> { return "North"; }
             case SOUTH -> { return "South"; }
             case WEST -> { return "West"; }
             case EAST -> { return "East"; }
         }
-        return null;
+        throw new UnsupportedOperationException("'" + this + "' is not implemented.");
     }
 }

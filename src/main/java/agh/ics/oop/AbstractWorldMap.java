@@ -5,8 +5,10 @@ import java.util.*;
 public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver {
     protected Map<Class<? extends AbstractWorldMapElement>, Map<Vector2d, AbstractWorldMapElement>> worldMapElements;
     private final MapVisualizer mapVisualizer;
+    private final MapBoundary mapBoundary;
 
     protected AbstractWorldMap() {
+        mapBoundary = new MapBoundary();
         worldMapElements = new HashMap<>();
         mapVisualizer = new MapVisualizer(this);
     }
@@ -46,7 +48,7 @@ public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObse
         return null;
     }
 
-    public boolean place(AbstractWorldMapElement element) {
+    public void place(AbstractWorldMapElement element) {
         if (element == null)
             throw new IllegalArgumentException("'element' argument can not be null.");
 
@@ -54,15 +56,22 @@ public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObse
                 worldMapElements.computeIfAbsent(element.getClass(), k -> new HashMap<>());
 
         if (!isAccessible(element.getPosition()))
-            return false;
+            throw new IllegalArgumentException("Cannot place place element at not accessible field.");
         elements.put(element.getPosition(), element);
-        return true;
+
+        if (element instanceof IObservable) {
+            ((IObservable) element).addObserver(this);
+            ((IObservable) element).addObserver(mapBoundary);
+        }
+
+        mapBoundary.addPosition(element.getPosition());
     }
 
     @Override
     @Deprecated
     public boolean place(Animal animal) {
-        return this.place((AbstractWorldMapElement) animal);
+        this.place((AbstractWorldMapElement) animal);
+        return true;
     }
 
     public <T extends AbstractWorldMapElement>
@@ -88,7 +97,8 @@ public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObse
 
     @Override
     public String toString() {
-        Vector2d lowerLeft = new Vector2d(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        return mapVisualizer.draw(mapBoundary.getLowerLeft(), mapBoundary.getUpperRight());
+/*        Vector2d lowerLeft = new Vector2d(Integer.MAX_VALUE, Integer.MAX_VALUE);
         Vector2d upperRight = new Vector2d(Integer.MIN_VALUE, Integer.MIN_VALUE);
 
         for (Map<Vector2d, AbstractWorldMapElement> elements : worldMapElements.values())
@@ -97,6 +107,6 @@ public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObse
                 upperRight = upperRight.upperRight(elementPosition);
             }
 
-        return mapVisualizer.draw(lowerLeft, upperRight);
+        return mapVisualizer.draw(lowerLeft, upperRight);*/
     }
 }

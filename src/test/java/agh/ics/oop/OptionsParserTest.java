@@ -46,12 +46,7 @@ class OptionsParserTest {
                 }),
                 "Testing bunch of strings - 3");
 
-        assertArrayEquals(new MoveDirection[] {
-                        MoveDirection.LEFT,
-                        MoveDirection.RIGHT,
-                        MoveDirection.FORWARD,
-                        MoveDirection.BACKWARD
-                }, parser.parse(new String[]{
+        assertThrows(IllegalArgumentException.class, () -> parser.parse(new String[]{
                         "asbr",
                         "left",
                         "r",
