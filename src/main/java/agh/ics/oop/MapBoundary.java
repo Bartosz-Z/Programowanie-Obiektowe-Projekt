@@ -45,9 +45,10 @@ public class MapBoundary implements IPositionChangeObserver {
         if (newPosition == null)
             throw new IllegalArgumentException("'newPosition' argument can not be null.");
 
-        xOrder.remove(oldPosition.x());
+        if (!xOrder.remove(oldPosition.x()) || !yOrder.remove(oldPosition.y()))
+            throw new IllegalArgumentException("Vector2d: [" + oldPosition + "] was not found in multiset");
+
         xOrder.add(newPosition.x());
-        yOrder.remove(oldPosition.y());
         yOrder.add(newPosition.y());
     }
 }
