@@ -116,6 +116,10 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         return currentEnergy;
     }
 
+    public Genome getGenome() {
+        return genome;
+    }
+
     public float getEnergyPercentage() {
         return ((float) currentEnergy) / maxEnergy;
     }

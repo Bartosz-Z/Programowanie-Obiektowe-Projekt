@@ -4,7 +4,9 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-public record Genome(int[] genes) {
+public class Genome {
+    private final int[] genes;
+
     public Genome(int[] genes) {
         if (genes == null)
             throw new IllegalArgumentException("'genes' argument can not be null");
@@ -51,6 +53,10 @@ public record Genome(int[] genes) {
 
     public int getGene(int geneIndex) {
         return genes[geneIndex];
+    }
+
+    public Genome getGenomeClone() {
+        return new Genome(genes);
     }
 
     @Override

@@ -10,13 +10,15 @@ public class SimulationEngine implements Runnable {
     private final List<Animal> animals;
     private final WorldMapElementsStorage elementsStorage;
     private final int animalInitialEnergy, animalMaxEnergy, grassEnergy;
+    private int magicEvolutionsLeft;
 
     public SimulationEngine(
             AbstractJungleMap map,
             int animalsCount,
             int animalInitialEnergy,
             int animalMaximumEnergy,
-            int grassEnergy) {
+            int grassEnergy,
+            boolean isMagicEvolution) {
         if (map == null)
             throw new IllegalArgumentException("'map' argument can not be null");
         if (animalsCount < 1)
@@ -36,6 +38,7 @@ public class SimulationEngine implements Runnable {
         this.animalInitialEnergy = animalInitialEnergy;
         animalMaxEnergy = animalMaximumEnergy;
         this.grassEnergy = grassEnergy;
+        magicEvolutionsLeft = isMagicEvolution ? 3 : 0;
 
         for (int i = 0; i < animalsCount; i++)
             placeAnimalInMap(getRandomUnoccupiedPosition(), this.animalInitialEnergy, getRandomGenome());
@@ -81,6 +84,22 @@ public class SimulationEngine implements Runnable {
         return new Genome(ThreadLocalRandom.current().ints(32, 0, 8).toArray());
     }
 
+    private void activateMagicEvolution() {
+        magicEvolutionsLeft--;
+        if (animals.size() == 0) {
+            for (int i = 0; i < 5; i++)
+                placeAnimalInMap(getRandomUnoccupiedPosition(), this.animalInitialEnergy, getRandomGenome());
+        } else {
+            int animalsCount = animals.size();
+            Random random = ThreadLocalRandom.current();
+            for (int i = 0; i < animalsCount; i++)
+                placeAnimalInMap(
+                        getRandomUnoccupiedPosition(),
+                        this.animalInitialEnergy,
+                        animals.get(random.nextInt(animalsCount)).getGenome());
+        }
+    }
+
     private void destroyDeadAnimals() {
         Iterator<Animal> iterator = animals.iterator();
         while (iterator.hasNext()) {
@@ -90,6 +109,8 @@ public class SimulationEngine implements Runnable {
                 iterator.remove();
             }
         }
+        if (animals.size() <= 5 && magicEvolutionsLeft > 0)
+            activateMagicEvolution();
     }
 
     private void moveAllAnimals() {
