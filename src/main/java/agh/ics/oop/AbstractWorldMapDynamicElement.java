@@ -1,5 +1,7 @@
 package agh.ics.oop;
 
+import agh.ics.oop.observers.*;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;

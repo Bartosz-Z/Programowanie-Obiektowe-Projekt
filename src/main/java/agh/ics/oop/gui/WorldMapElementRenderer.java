@@ -1,6 +1,10 @@
 package agh.ics.oop.gui;
 
 import agh.ics.oop.*;
+import agh.ics.oop.observers.IDirectionChangeObserver;
+import agh.ics.oop.observers.IDirectionObservable;
+import agh.ics.oop.observers.IPositionChangeObserver;
+import agh.ics.oop.observers.IPositionObservable;
 
 public class WorldMapElementRenderer implements IPositionChangeObserver, IDirectionChangeObserver {
     private final AbstractWorldMapElement worldMapElement;

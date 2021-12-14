@@ -1,8 +1,11 @@
 package agh.ics.oop;
 
 public class Grass extends AbstractWorldMapElement {
-    public Grass(Vector2d initialPosition) {
+    public final int energy;
+
+    public Grass(Vector2d initialPosition, int energy) {
         super(initialPosition);
+        this.energy = energy;
     }
 
     @Override

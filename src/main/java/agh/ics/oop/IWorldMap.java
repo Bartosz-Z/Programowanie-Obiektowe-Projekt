@@ -37,11 +37,12 @@ public interface IWorldMap {
     boolean isOccupied(Vector2d position);
 
     /**
-     * Return an object at a given position.
+     * Return a first/last object at a given position.
      *
      * @param position
      *            The position of the element.
      * @return element or null if the position is not occupied.
      */
-    AbstractWorldMapElement objectAt(Vector2d position);
+    AbstractWorldMapElement firstObjectAt(Vector2d position);
+    AbstractWorldMapElement lastObjectAt(Vector2d position);
 }

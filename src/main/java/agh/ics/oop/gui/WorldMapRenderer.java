@@ -1,6 +1,7 @@
 package agh.ics.oop.gui;
 
 import agh.ics.oop.*;
+import agh.ics.oop.observers.*;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.effect.BlendMode;
@@ -9,7 +10,12 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
 
-public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChangeObserver, IOnDestroyInvokeObserver {
+public class WorldMapRenderer
+        implements
+        IPositionChangeObserver,
+        IDirectionChangeObserver,
+        IOnDestroyInvokeObserver,
+        IOnPlaceElementInvokeObserver {
     private final AbstractWorldMap map;
     private final ResourcesLoader resourcesLoader;
     private GridPane grid;
@@ -40,29 +46,16 @@ public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChan
         for (int row = 0; row < grid.getRowCount(); row++)
             for (int col = 0; col < grid.getColumnCount(); col++) {
                 Vector2d tilePosition = new Vector2d(col, map.size.y() - row - 1);
-                AbstractWorldMapElement element = map.objectAt(tilePosition);
 
                 ImageView tileGround = new ImageView(resourcesLoader.getImageOf(map.getImageNameOfTile(tilePosition)));
-                ImageView tileElement;
-
-                if (element == null)
-                    tileElement = new ImageView(resourcesLoader.getImageOf(ImageName.TILE_BLANK));
-                else {
-                    tileElement = new ImageView(resourcesLoader.getImageOf(element.getImageName()));
-
-                    if (element instanceof IPositionObservable)
-                        ((IPositionObservable) element).addObserver(this);
-                    if (element instanceof IDirectionObservable)
-                        ((IDirectionObservable) element).addObserver(this);
-                    if (element instanceof IOnDestroyObservable)
-                        ((IOnDestroyObservable) element).addObserver(this);
-                }
+                ImageView tileElement = new ImageView(resourcesLoader.getImageOf(ImageName.TILE_BLANK));;
 
                 tileGround.setFitWidth(fieldSize);
                 tileGround.setPreserveRatio(true);
                 tileElement.setFitWidth(fieldSize);
                 tileElement.setPreserveRatio(true);
                 tileElement.setBlendMode(BlendMode.SRC_OVER);
+
                 elementsImage[tilePosition.y()][tilePosition.x()] = tileElement;
 
                 Group tileImage = new Group(tileGround, tileElement);
@@ -78,7 +71,7 @@ public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChan
         if (position == null)
             throw new IllegalArgumentException("'position' argument can not be null.");
 
-        AbstractWorldMapElement elementOnPosition = map.objectAt(position);
+        AbstractWorldMapElement elementOnPosition = map.firstObjectAt(position);
         if (elementOnPosition == null)
             elementsImage[position.y()][position.x()].setImage(resourcesLoader.getImageOf(ImageName.TILE_BLANK));
         else
@@ -103,6 +96,21 @@ public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChan
     public void onElementDestroy(AbstractWorldMapDynamicElement element) {
         if (element == null)
             throw new IllegalArgumentException("'element' argument can not be null.");
+
+        updatePosition(element.getPosition());
+    }
+
+    @Override
+    public void elementPlaced(AbstractWorldMapElement element) {
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
+
+        if (element instanceof IPositionObservable)
+            ((IPositionObservable) element).addObserver(this);
+        if (element instanceof IDirectionObservable)
+            ((IDirectionObservable) element).addObserver(this);
+        if (element instanceof IOnDestroyObservable)
+            ((IOnDestroyObservable) element).addObserver(this);
 
         updatePosition(element.getPosition());
     }

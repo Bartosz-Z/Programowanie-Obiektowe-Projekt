@@ -1,12 +1,20 @@
 package agh.ics.oop;
 
+import agh.ics.oop.observers.*;
+
 import java.util.*;
 
 public abstract class AbstractWorldMap
-        implements IWorldMap, IPositionChangeObserver, ILayerChangeObserver, IOnDestroyInvokeObserver {
+        implements
+        IWorldMap,
+        IPositionChangeObserver,
+        ILayerChangeObserver,
+        IOnDestroyInvokeObserver,
+        IOnPlaceElementObservable {
     protected final Map<Vector2d, SortedSet<AbstractWorldMapElement>> worldMapElements;
     private final Comparator<AbstractWorldMapElement> comparator;
     public final Vector2d size;
+    private final List<IOnPlaceElementInvokeObserver> onPlaceObservers;
 
     protected AbstractWorldMap(Vector2d mapSize) {
         if (mapSize == null)
@@ -20,9 +28,10 @@ public abstract class AbstractWorldMap
         comparator = (element1, element2) -> {
             if (element1.getLayer() == element2.getLayer())
                 return element1.hashCode() - element2.hashCode();
-            return element1.getLayer() - element2.getLayer();
+            return element2.getLayer() - element1.getLayer();
         };
         size = mapSize;
+        onPlaceObservers = new LinkedList<>();
     }
 
     @Override
@@ -30,11 +39,11 @@ public abstract class AbstractWorldMap
 
     @Override
     public boolean isOccupied(Vector2d position) {
-        return objectAt(position) != null;
+        return firstObjectAt(position) != null;
     }
 
     @Override
-    public AbstractWorldMapElement objectAt(Vector2d position) {
+    public AbstractWorldMapElement firstObjectAt(Vector2d position) {
         if (position == null)
             throw new IllegalArgumentException("'position' argument can not be null.");
 
@@ -46,6 +55,25 @@ public abstract class AbstractWorldMap
         } catch (NoSuchElementException e) {
             return null;
         }
+    }
+
+    @Override
+    public AbstractWorldMapElement lastObjectAt(Vector2d position) {
+        if (position == null)
+            throw new IllegalArgumentException("'position' argument can not be null.");
+
+        SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(position);
+        if (elements == null)
+            return null;
+        try {
+            return elements.last();
+        } catch (NoSuchElementException e) {
+            return null;
+        }
+    }
+
+    public SortedSet<? extends AbstractWorldMapElement> getElementsOnPosition(Vector2d position) {
+        return worldMapElements.get(position);
     }
 
     @Override
@@ -64,6 +92,9 @@ public abstract class AbstractWorldMap
             ((IPositionObservable) element).addObserver(this);
         if (element instanceof ILayerObservable)
             ((ILayerObservable) element).addObserver(this);
+
+        for (IOnPlaceElementInvokeObserver observer : onPlaceObservers)
+            observer.elementPlaced(element);
     }
 
     public void remove(AbstractWorldMapElement element) {
@@ -86,7 +117,7 @@ public abstract class AbstractWorldMap
 
         SortedSet<AbstractWorldMapElement> oldElements = worldMapElements.get(oldPosition);
         if (oldElements == null || !oldElements.remove(element))
-            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid." + element.position);
 
         worldMapElements.computeIfAbsent(newPosition, k -> new TreeSet<>(comparator)).add(element);
     }
@@ -98,7 +129,7 @@ public abstract class AbstractWorldMap
 
         SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
         if (elementsOnSameTile == null || !elementsOnSameTile.remove(element))
-            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid." + element.position);
     }
 
     @Override
@@ -122,4 +153,14 @@ public abstract class AbstractWorldMap
     }
 
     public abstract ImageName getImageNameOfTile(Vector2d tilePosition);
+
+    @Override
+    public void addObserver(IOnPlaceElementInvokeObserver observer) {
+        onPlaceObservers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(IOnPlaceElementInvokeObserver observer) {
+        onPlaceObservers.remove(observer);
+    }
 }

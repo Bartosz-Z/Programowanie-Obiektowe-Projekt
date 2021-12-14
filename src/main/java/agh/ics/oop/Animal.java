@@ -4,11 +4,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Animal extends AbstractWorldMapDynamicElement implements ILayerObservable {
-    private int energy;
+    private int currentEnergy;
+    private final int maxEnergy;
     private Genome genome;
     protected final List<ILayerChangeObserver> layerObservers;
 
-    public Animal(AbstractWorldMap map, Vector2d initialPosition, int initialEnergy, Genome initialGenome) {
+    public Animal(
+            AbstractWorldMap map,
+            Vector2d initialPosition,
+            int initialEnergy,
+            int maximumEnergy,
+            Genome initialGenome) {
         super(map, initialPosition);
 
         if (initialEnergy <= 0)
@@ -16,7 +22,8 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         if (initialGenome == null)
             throw new IllegalArgumentException("'initialGenome' argument can not be null");
 
-        energy = initialEnergy;
+        currentEnergy = initialEnergy;
+        maxEnergy = maximumEnergy;
         genome = initialGenome;
         layerObservers = new LinkedList<>();
     }
@@ -30,14 +37,14 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
             throw new IllegalArgumentException("'genome' argument can not be null");
 
         this.position = position;
-        this.energy = energy;
+        this.currentEnergy = energy;
         this.genome = genome;
     }
 
     private void energyChanged(int newEnergy) {
         for (ILayerChangeObserver observer : layerObservers)
             observer.preLayerChanged(this);
-        energy = newEnergy;
+        currentEnergy = newEnergy;
         for (ILayerChangeObserver observer : layerObservers)
             observer.postLayerChanged(this);
     }
@@ -48,18 +55,18 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
         if (activeGene == 0) {
              if (tryChangePosition(position.add(mapDirection.toUnitVector())))
-                 energyChanged(energy - 10);
+                 energyChanged(currentEnergy - 10);
         } else if (activeGene == 4) {
             if (tryChangePosition(position.subtract(mapDirection.toUnitVector())))
-                energyChanged(energy - 10);
+                energyChanged(currentEnergy - 10);
         } else if (activeGene < 4) {
-            energyChanged(energy - 5);
+            energyChanged(currentEnergy - 5);
             MapDirection newDirection = mapDirection;
             for (int i = 0; i < activeGene; i++)
                 newDirection = newDirection.next();
             changeDirection(newDirection);
         } else {
-            energyChanged(energy - 5);
+            energyChanged(currentEnergy - 5);
             MapDirection newDirection = mapDirection;
             for (int i = 4; i < activeGene; i++)
                 newDirection = newDirection.previous();
@@ -69,7 +76,7 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
     @Override
     public int getLayer() {
-        return energy;
+        return currentEnergy;
     }
 
     @Override
@@ -98,6 +105,18 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
     }
 
     public boolean isAlive() {
-        return energy >= 0;
+        return currentEnergy >= 0;
+    }
+
+    public void addEnergy(int energy) {
+        currentEnergy = Math.max(currentEnergy + energy, maxEnergy);
+    }
+
+    public int getEnergy() {
+        return currentEnergy;
+    }
+
+    public float getEnergyPercentage() {
+        return ((float) currentEnergy) / maxEnergy;
     }
 }
