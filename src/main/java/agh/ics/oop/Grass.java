@@ -6,7 +6,12 @@ public class Grass extends AbstractWorldMapElement {
     }
 
     @Override
-    protected char getIcon() {
-        return '*';
+    public int getLayer() {
+        return -1;
+    }
+
+    @Override
+    public ImageName getImageName() {
+        return ImageName.TILE_GRASS;
     }
 }

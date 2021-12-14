@@ -16,8 +16,8 @@ class GrassFieldTest {
 
     @BeforeEach
     void setUp() {
-        map = new GrassField(10);
-        grasses = map.getWorldMapElements(Grass.class);
+        map = new GrassField(4, 4);
+        grasses = null;//map.getWorldMapElements(Grass.class);
     }
 
     @Test

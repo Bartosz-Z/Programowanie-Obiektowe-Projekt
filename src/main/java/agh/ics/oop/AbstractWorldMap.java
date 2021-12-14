@@ -2,15 +2,27 @@ package agh.ics.oop;
 
 import java.util.*;
 
-public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObserver {
-    protected Map<Class<? extends AbstractWorldMapElement>, Map<Vector2d, AbstractWorldMapElement>> worldMapElements;
-    private final MapVisualizer mapVisualizer;
-    private final MapBoundary mapBoundary;
+public abstract class AbstractWorldMap
+        implements IWorldMap, IPositionChangeObserver, ILayerChangeObserver {
+    protected final Map<Vector2d, SortedSet<AbstractWorldMapElement>> worldMapElements;
+    private final Comparator<AbstractWorldMapElement> comparator;
+    public final Vector2d size;
 
-    protected AbstractWorldMap() {
-        mapBoundary = new MapBoundary();
+    protected AbstractWorldMap(Vector2d mapSize) {
+        if (mapSize == null)
+            throw new IllegalArgumentException("'mapSize' argument can not be null.");
+        if (mapSize.x() <= 0)
+            throw new IllegalArgumentException("Map width must be positive.");
+        if (mapSize.y() <= 0)
+            throw new IllegalArgumentException("Map height must be positive.");
+
         worldMapElements = new HashMap<>();
-        mapVisualizer = new MapVisualizer(this);
+        comparator = (element1, element2) -> {
+            if (element1.getLayer() == element2.getLayer())
+                return element1.hashCode() - element2.hashCode();
+            return element1.getLayer() - element2.getLayer();
+        };
+        size = mapSize;
     }
 
     @Override
@@ -22,61 +34,45 @@ public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObse
     }
 
     @Override
-    public Object objectAt(Vector2d position) {
+    public AbstractWorldMapElement objectAt(Vector2d position) {
         if (position == null)
             throw new IllegalArgumentException("'position' argument can not be null.");
 
-        for (Map<Vector2d, AbstractWorldMapElement> elements : worldMapElements.values()) {
-            AbstractWorldMapElement element = elements.get(position);
-            if (element != null)
-                return element;
+        SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(position);
+        if (elements == null)
+            return null;
+        try {
+            return elements.first();
+        } catch (NoSuchElementException e) {
+            return null;
         }
-        return null;
     }
 
-    public <T extends AbstractWorldMapElement>
-    AbstractWorldMapElement objectOfClassAt(Class<T> elementClass, Vector2d position) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null.");
-
-        Map<Vector2d, ? extends AbstractWorldMapElement> elements = worldMapElements.get(elementClass);
-        if (elements != null)
-            for (AbstractWorldMapElement element : elements.values())
-                if (element.isAt(position))
-                    return element;
-
-        return null;
-    }
-
+    @Override
     public void place(AbstractWorldMapElement element) {
         if (element == null)
             throw new IllegalArgumentException("'element' argument can not be null.");
 
-        Map<Vector2d, AbstractWorldMapElement> elements =
-                worldMapElements.computeIfAbsent(element.getClass(), k -> new HashMap<>());
+        Vector2d elementPosition = element.getPosition();
 
-        if (!isAccessible(element.getPosition()))
+        if (!isAccessible(elementPosition))
             throw new IllegalArgumentException("Cannot place place element at not accessible field.");
-        elements.put(element.getPosition(), element);
 
-        if (element instanceof IObservable) {
-            ((IObservable) element).addObserver(this);
-            ((IObservable) element).addObserver(mapBoundary);
-        }
+        worldMapElements.computeIfAbsent(elementPosition, k -> new TreeSet<>(comparator)).add(element);
 
-        mapBoundary.addPosition(element.getPosition());
+        if (element instanceof IPositionObservable)
+            ((IPositionObservable) element).addObserver(this);
+        if (element instanceof ILayerObservable)
+            ((ILayerObservable) element).addObserver(this);
     }
 
-    @Override
-    @Deprecated
-    public boolean place(Animal animal) {
-        this.place((AbstractWorldMapElement) animal);
-        return true;
-    }
+    public void remove(AbstractWorldMapElement element) {
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
 
-    public <T extends AbstractWorldMapElement>
-    Map<Vector2d, ? extends AbstractWorldMapElement> getWorldMapElements(Class<T> elementClass) {
-        return worldMapElements.get(elementClass);
+        SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(element.getPosition());
+        if (elements == null || !elements.remove(element))
+            throw new IllegalStateException("Such an element is not placed in the map.");
     }
 
     @Override
@@ -88,25 +84,50 @@ public abstract class AbstractWorldMap implements IWorldMap, IPositionChangeObse
         if (newPosition == null)
             throw new IllegalArgumentException("'newPosition' argument can not be null.");
 
-        Map<Vector2d, AbstractWorldMapElement> elements = worldMapElements.get(element.getClass());
-        if (elements == null || elements.remove(oldPosition) == null)
-            throw new IllegalArgumentException("Such an element is not placed in the map.");
+        SortedSet<AbstractWorldMapElement> oldElements = worldMapElements.get(oldPosition);
+        List<String> snapshot = new LinkedList<>();
+        for (SortedSet<AbstractWorldMapElement> trees : worldMapElements.values())
+            for (AbstractWorldMapElement ele : oldElements)
+                snapshot.add(ele + ": " + ele.position + " in: " + trees.hashCode());
+        if (oldElements == null || !oldElements.remove(element)) {
+            for (SortedSet<AbstractWorldMapElement> trees : worldMapElements.values())
+                trees.forEach(ele -> System.out.println(ele + ": " + ele.position + " in: " + trees.hashCode()));
+            System.out.println("-----------");
+            snapshot.forEach(System.out::println);
+            System.out.println(oldElements.contains(element));
+            boolean flag = false;
+            for (AbstractWorldMapElement ele : oldElements)
+                if (ele.equals(element)) {
+                    flag = true;
+                    break;
+                }
+            System.out.println(flag);
 
-        elements.put(newPosition, element);
+            throw new IllegalStateException("Such an element [" + element + "] is not placed in the map [" + oldElements.hashCode() + "]." + oldPosition + " " + newPosition);
+        }
+
+        worldMapElements.computeIfAbsent(newPosition, k -> new TreeSet<>(comparator)).add(element);
     }
 
     @Override
-    public String toString() {
-        return mapVisualizer.draw(mapBoundary.getLowerLeft(), mapBoundary.getUpperRight());
-/*        Vector2d lowerLeft = new Vector2d(Integer.MAX_VALUE, Integer.MAX_VALUE);
-        Vector2d upperRight = new Vector2d(Integer.MIN_VALUE, Integer.MIN_VALUE);
+    public void preLayerChanged(AbstractWorldMapElement element) {
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
 
-        for (Map<Vector2d, AbstractWorldMapElement> elements : worldMapElements.values())
-            for (Vector2d elementPosition : elements.keySet()) {
-                lowerLeft = lowerLeft.lowerLeft(elementPosition);
-                upperRight = upperRight.upperRight(elementPosition);
-            }
-
-        return mapVisualizer.draw(lowerLeft, upperRight);*/
+        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
+        if (elementsOnSameTile == null || !elementsOnSameTile.remove(element))
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
     }
+
+    @Override
+    public void postLayerChanged(AbstractWorldMapElement element) {
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
+
+        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
+        if (elementsOnSameTile == null || !elementsOnSameTile.add(element))
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
+    }
+
+    public abstract ImageName getImageNameOfTile(Vector2d tilePosition);
 }

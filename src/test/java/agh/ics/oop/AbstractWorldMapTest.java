@@ -12,7 +12,7 @@ class AbstractWorldMapTest {
 
     @BeforeEach
     void setUp() {
-        map = new AbstractWorldMap() {
+        map = new AbstractWorldMap(new Vector2d(4, 4)) {
             @Override
             public boolean isAccessible(Vector2d position) {
                 if (position == null)

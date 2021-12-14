@@ -20,7 +20,7 @@ class AnimalTest {
     @BeforeEach
     void setUp() {
         map = new RectangularMap(4, 4);
-        animal = new Animal(map);
+        animal = new Animal(map, new Vector2d(2, 2));
         map.place(animal);
     }
 

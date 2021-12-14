@@ -1,6 +1,7 @@
 plugins {
 	id 'application'
     id 'java'
+    id 'org.openjfx.javafxplugin' version '0.0.10'
 }
 
 group 'org.example'
@@ -24,4 +25,16 @@ test {
 
 application {
   mainClassName = 'agh.ics.oop.World'
+}
+
+javafx {
+    version = "17"
+    modules = [ 'javafx.controls' ]
+
+    application {
+        mainClassName = 'agh.ics.oop.gui.App'
+        applicationDefaultJvmArgs = [
+                "--module-path=C:\\Users\\Bartosz\\.jdks\\javafx-sdk-17.0.1\\lib"
+        ]
+    }
 }

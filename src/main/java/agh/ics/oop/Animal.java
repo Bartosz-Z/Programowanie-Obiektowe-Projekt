@@ -3,63 +3,97 @@ package agh.ics.oop;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Animal extends AbstractWorldMapElement implements IObservable {
-    public final AbstractWorldMap map;
-    private MapDirection mapDirection = MapDirection.NORTH;
-    private final List<IPositionChangeObserver> observers = new LinkedList<>();
+public class Animal extends AbstractWorldMapDynamicElement implements ILayerObservable {
+    private int energy;
+    private Genome genome;
+    protected final List<ILayerChangeObserver> layerObservers;
 
-    public Animal(AbstractWorldMap map) {
-        super(new Vector2d(2, 2));
-        if (map == null)
-            throw new IllegalArgumentException("'map' argument can not be null.");
+    public Animal(AbstractWorldMap map, Vector2d initialPosition, int initialEnergy, Genome initialGenome) {
+        super(map, initialPosition);
 
-        this.map = map;
+        if (initialEnergy <= 0)
+            throw new IllegalArgumentException("'initialEnergy' argument should be positive");
+        if (initialGenome == null)
+            throw new IllegalArgumentException("'initialGenome' argument can not be null");
+
+        energy = initialEnergy;
+        genome = initialGenome;
+        layerObservers = new LinkedList<>();
     }
 
-    public Animal(AbstractWorldMap map, Vector2d initialPosition) {
-        super(initialPosition);
-        if (map == null)
-            throw new IllegalArgumentException("'map' argument can not be null.");
+    void updateState(Vector2d position, int energy, Genome genome) {
+        if (position == null)
+            throw new IllegalArgumentException("'position' argument can not be null");
+        if (energy <= 0)
+            throw new IllegalArgumentException("'energy' argument should be positive");
+        if (genome == null)
+            throw new IllegalArgumentException("'genome' argument can not be null");
 
-        this.map = map;
+        this.position = position;
+        this.energy = energy;
+        this.genome = genome;
+    }
+
+    private void energyChanged(int newEnergy) {
+        for (ILayerChangeObserver observer : layerObservers)
+            observer.preLayerChanged(this);
+        energy = newEnergy;
+        for (ILayerChangeObserver observer : layerObservers)
+            observer.postLayerChanged(this);
     }
 
     @Override
-    protected char getIcon() {
-        return mapDirection.toString().charAt(0);
-    }
+    public void move() {
+        int activeGene = genome.getRandomGene();
 
-    private void tryChangingPosition(Vector2d newPosition) {
-        if (map.isAccessible(newPosition)) {
-            for (IPositionChangeObserver observer : observers)
-                observer.positionChanged(this, position, newPosition);
-            position = newPosition;
+        if (activeGene == 0) {
+             if (tryChangePosition(position.add(mapDirection.toUnitVector())))
+                 energyChanged(energy - 10);
+        } else if (activeGene == 4) {
+            if (tryChangePosition(position.subtract(mapDirection.toUnitVector())))
+                energyChanged(energy - 10);
+        } else if (activeGene < 4) {
+            energyChanged(energy - 5);
+            MapDirection newDirection = mapDirection;
+            for (int i = 0; i < activeGene; i++)
+                newDirection = newDirection.next();
+            changeDirection(newDirection);
+        } else {
+            energyChanged(energy - 5);
+            MapDirection newDirection = mapDirection;
+            for (int i = 4; i < activeGene; i++)
+                newDirection = newDirection.previous();
+            changeDirection(newDirection);
         }
     }
 
-    public void move(MoveDirection direction) {
-        if (direction == null)
-            throw new IllegalArgumentException("Argument can not be null.");
+    @Override
+    public int getLayer() {
+        return energy;
+    }
 
-        switch (direction) {
-            case RIGHT -> mapDirection = mapDirection.next();
-            case LEFT -> mapDirection = mapDirection.previous();
-            case FORWARD -> tryChangingPosition(position.add(mapDirection.toUnitVector()));
-            case BACKWARD -> tryChangingPosition(position.subtract(mapDirection.toUnitVector()));
+    @Override
+    public ImageName getImageName() {
+        switch (mapDirection) {
+            case NORTH -> { return ImageName.TILE_ANIMAL_NORTH; }
+            case NORTH_EAST -> { return ImageName.TILE_ANIMAL_NORTH_EAST; }
+            case EAST -> { return ImageName.TILE_ANIMAL_EAST; }
+            case SOUTH_EAST -> { return ImageName.TILE_ANIMAL_SOUTH_EAST; }
+            case SOUTH -> { return ImageName.TILE_ANIMAL_SOUTH; }
+            case SOUTH_WEST -> { return ImageName.TILE_ANIMAL_SOUTH_WEST; }
+            case WEST -> { return ImageName.TILE_ANIMAL_WEST; }
+            case NORTH_WEST -> { return ImageName.TILE_ANIMAL_NORTH_WEST; }
         }
+        throw new UnsupportedOperationException("'" + mapDirection + "' is not implemented.");
     }
 
     @Override
-    public void addObserver(IPositionChangeObserver observer) {
-        observers.add(observer);
+    public void addObserver(ILayerChangeObserver observer) {
+        layerObservers.add(observer);
     }
 
     @Override
-    public void removeObserver(IPositionChangeObserver observer) {
-        observers.remove(observer);
-    }
-
-    public MapDirection getOrientation() {
-        return mapDirection;
+    public void removeObserver(ILayerChangeObserver observer) {
+        layerObservers.remove(observer);
     }
 }

@@ -10,7 +10,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SimulationEngineTest {
 
-    MoveDirection[] moveDirections = new OptionsParser().parse("f b r l f f r r f f f f".split(" "));
     Vector2d[] initialPositions = {
             new Vector2d(2,2),
             new Vector2d(3,4)
@@ -20,7 +19,7 @@ class SimulationEngineTest {
     SimulationEngine engine;
 
     @BeforeEach
-    void setUp() { engine = new SimulationEngine(map, moveDirections, initialPositions); }
+    void setUp() { engine = new SimulationEngine(map, 10); }
 
     @Test
     @DisplayName("Test if engine was constructed correctly")
