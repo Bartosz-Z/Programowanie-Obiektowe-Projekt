@@ -1,5 +1,6 @@
 package agh.ics.oop;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -48,6 +49,7 @@ public class SimulationEngine implements Runnable {
 
         map.place(animal);
         animals.add(animal);
+        animal.addObserver((IOnDestroyInvokeObserver) map);
     }
 
     private Vector2d getRandomUnoccupiedPosition() {
@@ -71,16 +73,31 @@ public class SimulationEngine implements Runnable {
         return new Genome(ThreadLocalRandom.current().ints(32, 0, 8).toArray());
     }
 
+    private void destroyDeadAnimals() {
+        Iterator<Animal> iterator = animals.iterator();
+        while (iterator.hasNext()) {
+            Animal animal = iterator.next();
+            if (!animal.isAlive()) {
+                animal.destroy();
+                iterator.remove();
+            }
+        }
+    }
+
+    private void moveAllAnimals() {
+        animals.forEach(Animal::move);
+    }
+
     @Override
     public void run() {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 30; i++) {
             try {
-                Thread.sleep(1);
+                Thread.sleep(300);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            for (Animal animal : animals)
-                animal.move();
+            destroyDeadAnimals();
+            moveAllAnimals();
         }
 
 

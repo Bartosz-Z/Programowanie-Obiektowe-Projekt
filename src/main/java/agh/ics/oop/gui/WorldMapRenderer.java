@@ -9,7 +9,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
 
-public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChangeObserver {
+public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChangeObserver, IOnDestroyInvokeObserver {
     private final AbstractWorldMap map;
     private final ResourcesLoader resourcesLoader;
     private GridPane grid;
@@ -51,9 +51,11 @@ public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChan
                     tileElement = new ImageView(resourcesLoader.getImageOf(element.getImageName()));
 
                     if (element instanceof IPositionObservable)
-                        ((IPositionObservable)element).addObserver(this);
+                        ((IPositionObservable) element).addObserver(this);
                     if (element instanceof IDirectionObservable)
-                        ((IDirectionObservable)element).addObserver(this);
+                        ((IDirectionObservable) element).addObserver(this);
+                    if (element instanceof IOnDestroyObservable)
+                        ((IOnDestroyObservable) element).addObserver(this);
                 }
 
                 tileGround.setFitWidth(fieldSize);
@@ -72,23 +74,36 @@ public class WorldMapRenderer implements IPositionChangeObserver, IDirectionChan
         return grid;
     }
 
+    private void updatePosition(Vector2d position) {
+        if (position == null)
+            throw new IllegalArgumentException("'position' argument can not be null.");
+
+        AbstractWorldMapElement elementOnPosition = map.objectAt(position);
+        if (elementOnPosition == null)
+            elementsImage[position.y()][position.x()].setImage(resourcesLoader.getImageOf(ImageName.TILE_BLANK));
+        else
+            elementsImage[position.y()][position.x()].setImage(resourcesLoader.getImageOf(elementOnPosition.getImageName()));
+    }
+
     @Override
     public void directionChanged(AbstractWorldMapDynamicElement element) {
-        Vector2d elementPosition = element.getPosition();
-        elementsImage[elementPosition.y()][elementPosition.x()].setImage(resourcesLoader.getImageOf(element.getImageName()));
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
+
+        updatePosition(element.getPosition());
     }
 
     @Override
     public void positionChanged(AbstractWorldMapElement element, Vector2d oldPosition, Vector2d newPosition) {
-        AbstractWorldMapElement oldPositionElement = map.objectAt(oldPosition);
-        AbstractWorldMapElement newPositionElement = map.objectAt(newPosition);
-        if (oldPositionElement == null)
-            elementsImage[oldPosition.y()][oldPosition.x()].setImage(resourcesLoader.getImageOf(ImageName.TILE_BLANK));
-        else
-            elementsImage[oldPosition.y()][oldPosition.x()].setImage(resourcesLoader.getImageOf(oldPositionElement.getImageName()));
-        if (newPositionElement == null)
-            elementsImage[newPosition.y()][newPosition.x()].setImage(resourcesLoader.getImageOf(ImageName.TILE_BLANK));
-        else
-            elementsImage[newPosition.y()][newPosition.x()].setImage(resourcesLoader.getImageOf(newPositionElement.getImageName()));
+        updatePosition(oldPosition);
+        updatePosition(newPosition);
+    }
+
+    @Override
+    public void onElementDestroy(AbstractWorldMapDynamicElement element) {
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
+
+        updatePosition(element.getPosition());
     }
 }

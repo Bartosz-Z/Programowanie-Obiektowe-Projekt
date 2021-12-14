@@ -96,4 +96,8 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
     public void removeObserver(ILayerChangeObserver observer) {
         layerObservers.remove(observer);
     }
+
+    public boolean isAlive() {
+        return energy >= 0;
+    }
 }

@@ -5,11 +5,13 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public abstract class AbstractWorldMapDynamicElement
-        extends AbstractWorldMapElement implements IMovable, IPositionObservable, IDirectionObservable {
+        extends AbstractWorldMapElement
+        implements IMovable, IPositionObservable, IDirectionObservable, IOnDestroyObservable {
     protected final AbstractWorldMap map;
     protected MapDirection mapDirection;
     protected final List<IPositionChangeObserver> positionObservers;
     protected final List<IDirectionChangeObserver> directionObservers;
+    protected final List<IOnDestroyInvokeObserver> onDestroyObservers;
 
     protected AbstractWorldMapDynamicElement(AbstractWorldMap map, Vector2d initialPosition) {
         super(initialPosition);
@@ -21,6 +23,7 @@ public abstract class AbstractWorldMapDynamicElement
         this.mapDirection = MapDirection.values()[ThreadLocalRandom.current().nextInt(MapDirection.values().length)];
         positionObservers = new LinkedList<>();
         directionObservers = new LinkedList<>();
+        onDestroyObservers = new LinkedList<>();
     }
 
     protected boolean tryChangePosition(Vector2d newPosition) {
@@ -57,6 +60,21 @@ public abstract class AbstractWorldMapDynamicElement
     @Override
     public void removeObserver(IDirectionChangeObserver observer) {
         directionObservers.remove(observer);
+    }
+
+    @Override
+    public void addObserver(IOnDestroyInvokeObserver observer) {
+        onDestroyObservers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(IOnDestroyInvokeObserver observer) {
+        onDestroyObservers.remove(observer);
+    }
+
+    public void destroy() {
+        for (IOnDestroyInvokeObserver observer : onDestroyObservers)
+            observer.onElementDestroy(this);
     }
 
     @Override

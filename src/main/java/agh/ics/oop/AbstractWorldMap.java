@@ -3,7 +3,7 @@ package agh.ics.oop;
 import java.util.*;
 
 public abstract class AbstractWorldMap
-        implements IWorldMap, IPositionChangeObserver, ILayerChangeObserver {
+        implements IWorldMap, IPositionChangeObserver, ILayerChangeObserver, IOnDestroyInvokeObserver {
     protected final Map<Vector2d, SortedSet<AbstractWorldMapElement>> worldMapElements;
     private final Comparator<AbstractWorldMapElement> comparator;
     public final Vector2d size;
@@ -72,7 +72,7 @@ public abstract class AbstractWorldMap
 
         SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(element.getPosition());
         if (elements == null || !elements.remove(element))
-            throw new IllegalStateException("Such an element is not placed in the map.");
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
     }
 
     @Override
@@ -85,26 +85,8 @@ public abstract class AbstractWorldMap
             throw new IllegalArgumentException("'newPosition' argument can not be null.");
 
         SortedSet<AbstractWorldMapElement> oldElements = worldMapElements.get(oldPosition);
-        List<String> snapshot = new LinkedList<>();
-        for (SortedSet<AbstractWorldMapElement> trees : worldMapElements.values())
-            for (AbstractWorldMapElement ele : oldElements)
-                snapshot.add(ele + ": " + ele.position + " in: " + trees.hashCode());
-        if (oldElements == null || !oldElements.remove(element)) {
-            for (SortedSet<AbstractWorldMapElement> trees : worldMapElements.values())
-                trees.forEach(ele -> System.out.println(ele + ": " + ele.position + " in: " + trees.hashCode()));
-            System.out.println("-----------");
-            snapshot.forEach(System.out::println);
-            System.out.println(oldElements.contains(element));
-            boolean flag = false;
-            for (AbstractWorldMapElement ele : oldElements)
-                if (ele.equals(element)) {
-                    flag = true;
-                    break;
-                }
-            System.out.println(flag);
-
-            throw new IllegalStateException("Such an element [" + element + "] is not placed in the map [" + oldElements.hashCode() + "]." + oldPosition + " " + newPosition);
-        }
+        if (oldElements == null || !oldElements.remove(element))
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
 
         worldMapElements.computeIfAbsent(newPosition, k -> new TreeSet<>(comparator)).add(element);
     }
@@ -126,6 +108,16 @@ public abstract class AbstractWorldMap
 
         SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
         if (elementsOnSameTile == null || !elementsOnSameTile.add(element))
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
+    }
+
+    @Override
+    public void onElementDestroy(AbstractWorldMapDynamicElement element) {
+        if (element == null)
+            throw new IllegalArgumentException("'element' argument can not be null.");
+
+        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
+        if (elementsOnSameTile == null || !elementsOnSameTile.remove(element))
             throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
     }
 
