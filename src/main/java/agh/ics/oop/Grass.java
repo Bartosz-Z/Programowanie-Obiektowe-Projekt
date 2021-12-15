@@ -8,6 +8,10 @@ public class Grass extends AbstractWorldMapElement {
         this.energy = energy;
     }
 
+    void updateState(Vector2d position) {
+        this.position = position;
+    }
+
     @Override
     public int getLayer() {
         return -1;

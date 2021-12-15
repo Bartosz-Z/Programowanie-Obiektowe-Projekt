@@ -105,11 +105,11 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
     }
 
     public boolean isAlive() {
-        return currentEnergy >= 0;
+        return currentEnergy > 0;
     }
 
     public void addEnergy(int energy) {
-        currentEnergy = Math.max(currentEnergy + energy, maxEnergy);
+        energyChanged(Math.min(currentEnergy + energy, maxEnergy));
     }
 
     public int getEnergy() {

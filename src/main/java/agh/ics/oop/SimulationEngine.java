@@ -12,6 +12,8 @@ public class SimulationEngine implements Runnable {
     private final int animalInitialEnergy, animalMaxEnergy, grassEnergy;
     private int magicEvolutionsLeft;
 
+    private int no_elements = 0;
+
     public SimulationEngine(
             AbstractJungleMap map,
             int animalsCount,
@@ -46,14 +48,15 @@ public class SimulationEngine implements Runnable {
 
     private void placeAnimalInMap(Vector2d position, int energy, Genome genome) {
         Animal animal = (Animal)elementsStorage.restore(Animal.class);
-        if (animal == null)
+        if (animal == null) {
             animal = new Animal(map, position, energy, animalMaxEnergy, genome);
-        else
+            animal.addObserver((IOnDestroyInvokeObserver) map);
+        } else
             animal.updateState(position, energy, genome);
 
-        animal.addObserver((IOnDestroyInvokeObserver) map);
         map.place(animal);
         animals.add(animal);
+        no_elements++;
     }
 
     private Vector2d getRandomUnoccupiedPosition() {
@@ -62,7 +65,7 @@ public class SimulationEngine implements Runnable {
 
         boolean thereIsUnoccupiedTile = false;
         for (int row = 0; row < mapHeight; row++)
-            for (int col = 0; col < mapHeight; col++)
+            for (int col = 0; col < mapWidth; col++)
                 if (!map.isOccupied(new Vector2d(col, row))) {
                     thereIsUnoccupiedTile = true;
                     break;
@@ -107,6 +110,7 @@ public class SimulationEngine implements Runnable {
             if (!animal.isAlive()) {
                 animal.destroy();
                 iterator.remove();
+                no_elements--;
             }
         }
         if (animals.size() <= 5 && magicEvolutionsLeft > 0)
@@ -135,19 +139,29 @@ public class SimulationEngine implements Runnable {
                 }
                 for (Animal animalOnSameTile : animalsOnSameTile)
                     animalOnSameTile.addEnergy(grass.energy / animalsOnSameTile.size());
+                map.remove(grass);
+                elementsStorage.store(grass);
+                no_elements--;
             }
         }
     }
 
     public void addNewGrasses() {
         Vector2d grassPosition = getRandomUnoccupiedPosition();
-        if (grassPosition != null)
-            map.place(new Grass(grassPosition, grassEnergy));
+        if (grassPosition != null) {
+            Grass grass = (Grass)elementsStorage.restore(Grass.class);
+            if (grass == null)
+                grass = new Grass(grassPosition, grassEnergy);
+            else
+                grass.updateState(grassPosition);
+            map.place(grass);
+            no_elements++;
+        }
     }
 
     @Override
     public void run() {
-        for (int i = 0; i < 300; i++) {
+        for (int i = 0; i < 250; i++) {
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
