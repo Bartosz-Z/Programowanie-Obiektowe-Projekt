@@ -1,4 +1,4 @@
-package agh.ics.oop;
+package agh.ics.oop.observers;
 
 public interface ILayerObservable {
     void addObserver(ILayerChangeObserver observer);

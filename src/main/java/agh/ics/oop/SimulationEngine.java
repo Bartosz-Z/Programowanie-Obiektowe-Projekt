@@ -1,18 +1,20 @@
 package agh.ics.oop;
 
 import agh.ics.oop.observers.IOnDestroyInvokeObserver;
+import agh.ics.oop.observers.IOnNewEpochInvokeObserver;
+import agh.ics.oop.observers.IOnNewEpochObservable;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class SimulationEngine implements Runnable {
+public class SimulationEngine implements Runnable, IOnNewEpochObservable {
     private final AbstractJungleMap map;
     private final List<Animal> animals;
     private final WorldMapElementsStorage elementsStorage;
     private final int animalInitialEnergy, animalMaxEnergy, grassEnergy;
     private int magicEvolutionsLeft;
 
-    private int no_elements = 0;
+    private final List<IOnNewEpochInvokeObserver> newEpochObservers;
 
     public SimulationEngine(
             AbstractJungleMap map,
@@ -41,6 +43,7 @@ public class SimulationEngine implements Runnable {
         animalMaxEnergy = animalMaximumEnergy;
         this.grassEnergy = grassEnergy;
         magicEvolutionsLeft = isMagicEvolution ? 3 : 0;
+        newEpochObservers = new LinkedList<>();
 
         for (int i = 0; i < animalsCount; i++)
             placeAnimalInMap(getRandomUnoccupiedPosition(), this.animalInitialEnergy, getRandomGenome());
@@ -56,10 +59,10 @@ public class SimulationEngine implements Runnable {
 
         map.place(animal);
         animals.add(animal);
-        no_elements++;
     }
 
-    private Vector2d getRandomUnoccupiedPosition() {
+    private boolean isAnyUnoccupiedPosition() {
+        System.out.println("checking map...");
         int mapWidth = map.size.x();
         int mapHeight = map.size.y();
 
@@ -70,13 +73,29 @@ public class SimulationEngine implements Runnable {
                     thereIsUnoccupiedTile = true;
                     break;
                 }
-        if (!thereIsUnoccupiedTile)
-            return null;
+
+        return thereIsUnoccupiedTile;
+    }
+
+    private Vector2d getRandomUnoccupiedPosition() {
+        int mapWidth = map.size.x();
+        int mapHeight = map.size.y();
 
         Random random = ThreadLocalRandom.current();
 
         Vector2d position;
+        int iteration = 0;
+        int iterationToCheckIfMapIsFull = Math.round(mapHeight * mapWidth * 0.975f);
+        boolean checkedIfMapIsFull = false;
         while (true) {
+            if (!checkedIfMapIsFull) {
+                if (iteration > iterationToCheckIfMapIsFull) {
+                    checkedIfMapIsFull = true;
+                    if (!isAnyUnoccupiedPosition())
+                        return null;
+                } else
+                    iteration++;
+            }
             position = new Vector2d(random.nextInt(mapWidth), random.nextInt(mapHeight));
             if (!map.isOccupied(position))
                 return position;
@@ -110,7 +129,6 @@ public class SimulationEngine implements Runnable {
             if (!animal.isAlive()) {
                 animal.destroy();
                 iterator.remove();
-                no_elements--;
             }
         }
         if (animals.size() <= 5 && magicEvolutionsLeft > 0)
@@ -141,7 +159,6 @@ public class SimulationEngine implements Runnable {
                     animalOnSameTile.addEnergy(grass.energy / animalsOnSameTile.size());
                 map.remove(grass);
                 elementsStorage.store(grass);
-                no_elements--;
             }
         }
     }
@@ -155,22 +172,40 @@ public class SimulationEngine implements Runnable {
             else
                 grass.updateState(grassPosition);
             map.place(grass);
-            no_elements++;
         }
+    }
+
+    private void announceNewEpoch() {
+        for (IOnNewEpochInvokeObserver observer : newEpochObservers)
+            observer.newEpoch();
     }
 
     @Override
     public void run() {
-        for (int i = 0; i < 250; i++) {
+        long timer = System.currentTimeMillis();
+        for (int i = 0; i < 1000; i++) {
             try {
-                Thread.sleep(50);
+                Thread.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            announceNewEpoch();
             destroyDeadAnimals();
             moveAllAnimals();
             eatGrasses();
-            addNewGrasses();
+            for (int j = 0; j < 4; j++)
+                addNewGrasses();
         }
+        System.out.println(System.currentTimeMillis() - timer);
+    }
+
+    @Override
+    public void addObserver(IOnNewEpochInvokeObserver observer) {
+        newEpochObservers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(IOnNewEpochInvokeObserver observer) {
+        newEpochObservers.remove(observer);
     }
 }

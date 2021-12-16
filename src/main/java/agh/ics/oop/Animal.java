@@ -1,5 +1,8 @@
 package agh.ics.oop;
 
+import agh.ics.oop.observers.ILayerChangeObserver;
+import agh.ics.oop.observers.ILayerObservable;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -55,18 +58,18 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
         if (activeGene == 0) {
              if (tryChangePosition(position.add(mapDirection.toUnitVector())))
-                 energyChanged(currentEnergy - 10);
+                 energyChanged(currentEnergy - 0);
         } else if (activeGene == 4) {
             if (tryChangePosition(position.subtract(mapDirection.toUnitVector())))
-                energyChanged(currentEnergy - 10);
+                energyChanged(currentEnergy - 0);
         } else if (activeGene < 4) {
-            energyChanged(currentEnergy - 5);
+            energyChanged(currentEnergy - 0);
             MapDirection newDirection = mapDirection;
             for (int i = 0; i < activeGene; i++)
                 newDirection = newDirection.next();
             changeDirection(newDirection);
         } else {
-            energyChanged(currentEnergy - 5);
+            energyChanged(currentEnergy - 0);
             MapDirection newDirection = mapDirection;
             for (int i = 4; i < activeGene; i++)
                 newDirection = newDirection.previous();
