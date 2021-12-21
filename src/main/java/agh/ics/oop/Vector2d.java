@@ -5,6 +5,8 @@ import org.jetbrains.annotations.NotNull;
 
 public record Vector2d(int x, int y) {
 
+    public final static Vector2d zero = new Vector2d(0, 0);
+
     @Override
     @Contract(pure = true)
     public @NotNull String toString() {

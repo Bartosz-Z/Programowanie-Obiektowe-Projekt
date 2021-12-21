@@ -13,7 +13,8 @@ public class Genome {
         if (genes.length != 32)
             throw new IllegalArgumentException("'genes' argument length should be 32");
 
-        this.genes = genes.clone();
+        this.genes = genes;
+        Arrays.sort(this.genes);
     }
 
     public int getRandomGene() {
@@ -66,15 +67,7 @@ public class Genome {
         if (!(other instanceof Genome otherGenome))
             return false;
 
-        int[] thisGenesTypeCount = new int[8];
-        int[] otherGenesTypeCount = new int[8];
-
-        for (int i = 0; i < genes.length; i++) {
-            thisGenesTypeCount[genes[i]]++;
-            otherGenesTypeCount[otherGenome.genes[i]]++;
-        }
-
-        return Arrays.equals(thisGenesTypeCount, otherGenesTypeCount);
+        return Arrays.equals(genes, otherGenome.genes);
     }
 
     @Override

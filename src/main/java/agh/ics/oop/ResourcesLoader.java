@@ -14,6 +14,7 @@ public class ResourcesLoader {
 
         for (ImageName fileName : ImageName.values())
             images.put(fileName, loadImage(fileName.name));
+        images.put(ImageName.TILE_BLANK, null);
     }
 
     public Image getImageOf(ImageName fileName) {

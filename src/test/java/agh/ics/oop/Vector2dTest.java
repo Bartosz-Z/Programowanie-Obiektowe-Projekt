@@ -10,10 +10,10 @@ class Vector2dTest {
     @Test
     @DisplayName("Test equals method with various objects")
     void testEquals() {
-        Vector2d vec = new Vector2d(0, 0);
+        Vector2d vec = Vector2d.zero;
         assertEquals(vec, vec,
                 "Test vector2d equality with itself");
-        assertEquals(new Vector2d(0, 0), vec,
+        assertEquals(Vector2d.zero, vec,
                 "Test vector2d equality with it's copy");
         assertNotEquals(new Vector2d(1, 1), vec,
                 "Test vector2d equality with different vector");
@@ -30,7 +30,7 @@ class Vector2dTest {
                 "Test toString for both x,y positive");
         assertEquals("(-1,-1)", new Vector2d(-1, -1).toString(),
                 "Test toString for x both negative");
-        assertEquals("(0,0)", new Vector2d(0, 0).toString(),
+        assertEquals("(0,0)", Vector2d.zero.toString(),
                 "Test toString for both x,y zero");
     }
 

@@ -160,7 +160,7 @@ class AnimalTest {
         moveAnimalForward.apply(5);
         assertTrue(animal.isAt(animal.getPosition()),
                 "Animal should be on the map (west boundary)");
-        assertTrue(animal.isAt(new Vector2d(0, 0)),
+        assertTrue(animal.isAt(Vector2d.zero),
                 "Animal should be at (0,0) at this point (west boundary)");
     }
 }

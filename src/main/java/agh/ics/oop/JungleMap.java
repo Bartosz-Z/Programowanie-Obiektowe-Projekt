@@ -15,6 +15,6 @@ public class JungleMap extends AbstractJungleMap {
         if (position == null)
             throw new IllegalArgumentException("'position' argument can not be null.");
 
-        return position.follows(new Vector2d(0, 0)) && position.precedes(size.subtract(new Vector2d(1, 1)));
+        return position.follows(Vector2d.zero) && position.precedes(size.subtract(new Vector2d(1, 1)));
     }
 }

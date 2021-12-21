@@ -11,8 +11,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.RowConstraints;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class WorldMapRenderer
         implements
@@ -20,12 +19,12 @@ public class WorldMapRenderer
         IDirectionChangeObserver,
         IOnDestroyInvokeObserver,
         IOnPlaceElementInvokeObserver,
-        IOnNewEpochInvokeObserver {
+        IOnEpochEndInvokeObserver {
     private final AbstractWorldMap map;
     private final ResourcesLoader resourcesLoader;
     private GridPane grid;
     private final ImageView[][] elementsImage;
-    private final Set<Vector2d> tilesToUpdate;
+    private final Map<Vector2d, ImageName> tilesToUpdate;
 
     public WorldMapRenderer (AbstractWorldMap map, ResourcesLoader resourcesLoader) {
         if (map == null)
@@ -36,7 +35,7 @@ public class WorldMapRenderer
         this.map = map;
         this.resourcesLoader = resourcesLoader;
         elementsImage = new ImageView[map.size.y()][map.size.x()];
-        tilesToUpdate = new HashSet<>();
+        tilesToUpdate = new HashMap<>();
     }
 
     public GridPane createGrid(int fieldSize) {
@@ -77,7 +76,13 @@ public class WorldMapRenderer
     private void updatePosition(Vector2d position) {
         if (position == null)
             throw new IllegalArgumentException("'position' argument can not be null.");
-        tilesToUpdate.add(position);
+
+        AbstractWorldMapElement elementOnTile = map.firstObjectAt(position);
+
+        if (elementOnTile == null)
+            tilesToUpdate.put(position, ImageName.TILE_BLANK);
+        else
+            tilesToUpdate.put(position, elementOnTile.getImageName());
     }
 
     @Override
@@ -118,18 +123,13 @@ public class WorldMapRenderer
     }
 
     @Override
-    public void newEpoch() {
-        Vector2d[] positions = tilesToUpdate.toArray(Vector2d[]::new);
+    public void epochEnd() {
+        List<Map.Entry<Vector2d, ImageName>> tiles = new ArrayList<>(tilesToUpdate.entrySet());
         tilesToUpdate.clear();
         Platform.runLater(() -> {
-            for (Vector2d position : positions) {
-                AbstractWorldMapElement elementOnPosition = map.firstObjectAt(position);
-                if (elementOnPosition == null)
-                    elementsImage[position.y()][position.x()].setImage(resourcesLoader.getImageOf(ImageName.TILE_BLANK));
-                else
-                    elementsImage[position.y()][position.x()].setImage(
-                        resourcesLoader.getImageOf(elementOnPosition.getImageName()));
-            }
+            for (Map.Entry<Vector2d, ImageName> tile : tiles)
+                elementsImage[tile.getKey().y()][tile.getKey().x()]
+                        .setImage(resourcesLoader.getImageOf(tile.getValue()));
         });
     }
 }

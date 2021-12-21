@@ -58,18 +58,22 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
         if (activeGene == 0) {
              if (tryChangePosition(position.add(mapDirection.toUnitVector())))
-                 energyChanged(currentEnergy - 0);
+                 energyChanged(currentEnergy - 10);
+             else
+                 energyChanged(currentEnergy - 4);
         } else if (activeGene == 4) {
             if (tryChangePosition(position.subtract(mapDirection.toUnitVector())))
-                energyChanged(currentEnergy - 0);
+                energyChanged(currentEnergy - 11);
+            else
+                energyChanged(currentEnergy - 4);
         } else if (activeGene < 4) {
-            energyChanged(currentEnergy - 0);
+            energyChanged(currentEnergy - 5);
             MapDirection newDirection = mapDirection;
             for (int i = 0; i < activeGene; i++)
                 newDirection = newDirection.next();
             changeDirection(newDirection);
         } else {
-            energyChanged(currentEnergy - 0);
+            energyChanged(currentEnergy - 5);
             MapDirection newDirection = mapDirection;
             for (int i = 4; i < activeGene; i++)
                 newDirection = newDirection.previous();
@@ -84,17 +88,16 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
     @Override
     public ImageName getImageName() {
-        switch (mapDirection) {
-            case NORTH -> { return ImageName.TILE_ANIMAL_NORTH; }
-            case NORTH_EAST -> { return ImageName.TILE_ANIMAL_NORTH_EAST; }
-            case EAST -> { return ImageName.TILE_ANIMAL_EAST; }
-            case SOUTH_EAST -> { return ImageName.TILE_ANIMAL_SOUTH_EAST; }
-            case SOUTH -> { return ImageName.TILE_ANIMAL_SOUTH; }
-            case SOUTH_WEST -> { return ImageName.TILE_ANIMAL_SOUTH_WEST; }
-            case WEST -> { return ImageName.TILE_ANIMAL_WEST; }
-            case NORTH_WEST -> { return ImageName.TILE_ANIMAL_NORTH_WEST; }
-        }
-        throw new UnsupportedOperationException("'" + mapDirection + "' is not implemented.");
+        return switch (mapDirection) {
+            case NORTH -> ImageName.TILE_ANIMAL_NORTH;
+            case NORTH_EAST -> ImageName.TILE_ANIMAL_NORTH_EAST;
+            case EAST -> ImageName.TILE_ANIMAL_EAST;
+            case SOUTH_EAST -> ImageName.TILE_ANIMAL_SOUTH_EAST;
+            case SOUTH -> ImageName.TILE_ANIMAL_SOUTH;
+            case SOUTH_WEST -> ImageName.TILE_ANIMAL_SOUTH_WEST;
+            case WEST -> ImageName.TILE_ANIMAL_WEST;
+            case NORTH_WEST -> ImageName.TILE_ANIMAL_NORTH_WEST;
+        };
     }
 
     @Override
