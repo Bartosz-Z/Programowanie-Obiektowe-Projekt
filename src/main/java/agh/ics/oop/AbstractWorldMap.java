@@ -3,6 +3,9 @@ package agh.ics.oop;
 import agh.ics.oop.observers.*;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 
 public abstract class AbstractWorldMap
         implements
@@ -17,12 +20,9 @@ public abstract class AbstractWorldMap
     private final List<IOnPlaceElementInvokeObserver> onPlaceObservers;
 
     protected AbstractWorldMap(Vector2d mapSize) {
-        if (mapSize == null)
-            throw new IllegalArgumentException("'mapSize' argument can not be null.");
-        if (mapSize.x() <= 0)
-            throw new IllegalArgumentException("Map width must be positive.");
-        if (mapSize.y() <= 0)
-            throw new IllegalArgumentException("Map height must be positive.");
+        Ensure.Not.Null(mapSize, "size of world map");
+        Ensure.Is.MoreThen(mapSize.x(), 0, "world map width");
+        Ensure.Is.MoreThen(mapSize.y(), 0, "world map height");
 
         worldMapElements = new HashMap<>();
         comparator = (element1, element2) -> {
@@ -42,10 +42,125 @@ public abstract class AbstractWorldMap
         return firstObjectAt(position) != null;
     }
 
+    public boolean isAnyUnoccupiedPosition() {
+        return isAnyUnoccupiedPosition(Vector2d.zero, new Vector2d(size.x() - 1, size.y() - 1));
+    }
+
+    public boolean isAnyUnoccupiedPosition(Vector2d lowerLeftCorner, Vector2d upperRightCorner) {
+        if (!lowerLeftCorner.follows(Vector2d.zero) ||
+                !lowerLeftCorner.precedes(new Vector2d(size.x() - 1, size.y() -1 )))
+            throw new IllegalArgumentException("'lowerLeftCorner' need to be within map");
+
+        if (!upperRightCorner.follows(Vector2d.zero) ||
+                !upperRightCorner.precedes(new Vector2d(size.x() - 1, size.y() -1 )))
+            throw new IllegalArgumentException("'upperRightCorner' need to be within map");
+
+        if (!lowerLeftCorner.precedes(upperRightCorner))
+            throw new IllegalArgumentException("'lowerLeftCorner' should follows 'upperRightCorner'");
+
+        for (int row = lowerLeftCorner.y(); row <= upperRightCorner.y(); row++)
+            for (int col = lowerLeftCorner.x(); col <= upperRightCorner.x(); col++)
+                if (!isOccupied(new Vector2d(col, row)))
+                    return true;
+        return false;
+    }
+
+    public boolean isAnyUnoccupiedPositionReversed(Vector2d lowerLeftCorner, Vector2d upperRightCorner) {
+        if (!lowerLeftCorner.follows(Vector2d.zero) ||
+                !lowerLeftCorner.precedes(new Vector2d(size.x() - 1, size.y() -1 )))
+            throw new IllegalArgumentException("'lowerLeftCorner' need to be within map");
+
+        if (!upperRightCorner.follows(Vector2d.zero) ||
+                !upperRightCorner.precedes(new Vector2d(size.x() - 1, size.y() -1 )))
+            throw new IllegalArgumentException("'upperRightCorner' need to be within map");
+
+        if (!lowerLeftCorner.precedes(upperRightCorner))
+            throw new IllegalArgumentException("'lowerLeftCorner' should follows 'upperRightCorner'");
+
+        for (int row = 0; row < size.y(); row++)
+            for (int col = 0; col < lowerLeftCorner.x(); col++)
+                if (!isOccupied(new Vector2d(col, row)))
+                    return true;
+
+        for (int row = 0; row < size.y(); row++)
+            for (int col = upperRightCorner.x() + 1; col < size.x(); col++)
+                if (!isOccupied(new Vector2d(col, row)))
+                    return true;
+
+        for (int row = 0; row < lowerLeftCorner.y(); row++)
+            for (int col = lowerLeftCorner.x(); col <= upperRightCorner.x(); col++)
+                if (!isOccupied(new Vector2d(col, row)))
+                    return true;
+
+        for (int row = upperRightCorner.y() + 1; row < size.y(); row++)
+            for (int col = lowerLeftCorner.x(); col <= upperRightCorner.x(); col++)
+                if (!isOccupied(new Vector2d(col, row)))
+                    return true;
+
+        return false;
+    }
+
+    public Vector2d getRandomUnoccupiedPosition() {
+        return getRandomUnoccupiedPosition(Vector2d.zero, new Vector2d(size.x() - 1, size.y() - 1));
+    }
+
+    public Vector2d getRandomUnoccupiedPosition(Vector2d lowerLeftCorner, Vector2d upperRightCorner) {
+        return getRandomUnoccupiedPosition(lowerLeftCorner, upperRightCorner,
+                position -> !isOccupied(position),
+                a -> b -> () -> isAnyUnoccupiedPosition(a, b));
+    }
+
+    public Vector2d getRandomUnoccupiedPositionReversed(Vector2d lowerLeftCorner, Vector2d upperRightCorner) {
+        return getRandomUnoccupiedPosition(Vector2d.zero, new Vector2d(size.x() - 1, size.y() - 1),
+                position -> !isOccupied(position) && !(position.follows(lowerLeftCorner) && position.precedes(upperRightCorner)),
+                a -> b -> () -> isAnyUnoccupiedPositionReversed(a, b));
+    }
+
+    protected Vector2d getRandomUnoccupiedPosition(
+            Vector2d lowerLeftCorner,
+            Vector2d upperRightCorner,
+            Function<Vector2d, Boolean> isPositionCorrect,
+            Function<Vector2d, Function<Vector2d, BooleanSupplier>> anyUnoccupiedCondition) {
+        if (!lowerLeftCorner.follows(new Vector2d(0,0)) ||
+                !lowerLeftCorner.precedes(new Vector2d(size.x() - 1, size.y() -1 )))
+            throw new IllegalArgumentException("'lowerLeftCorner' need to be within map");
+
+        if (!upperRightCorner.follows(new Vector2d(0,0)) ||
+                !upperRightCorner.precedes(new Vector2d(size.x() - 1, size.y() -1 )))
+            throw new IllegalArgumentException("'upperRightCorner' need to be within map");
+
+        if (!lowerLeftCorner.precedes(upperRightCorner))
+            throw new IllegalArgumentException("'lowerLeftCorner' should follows 'upperRightCorner'");
+
+        int width = upperRightCorner.x() - lowerLeftCorner.x() + 1;
+        int height = upperRightCorner.y() - lowerLeftCorner.y() + 1;
+
+        Random random = ThreadLocalRandom.current();
+
+        Vector2d position;
+        int iteration = 0;
+        int iterationToCheckIfMapIsFull = Math.round(width * height * 0.975f);
+        boolean checkedIfMapIsFull = false;
+        while (true) {
+            if (!checkedIfMapIsFull) {
+                if (iteration > iterationToCheckIfMapIsFull) {
+                    checkedIfMapIsFull = true;
+                    if (!anyUnoccupiedCondition.apply(lowerLeftCorner).apply(upperRightCorner).getAsBoolean())
+                        return null;
+                } else
+                    iteration++;
+            }
+            position = new Vector2d(
+                    lowerLeftCorner.x() + random.nextInt(width),
+                    lowerLeftCorner.y() + random.nextInt(height));
+            if (isPositionCorrect.apply(position))
+                return position;
+        }
+    }
+
     @Override
     public AbstractWorldMapElement firstObjectAt(Vector2d position) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null.");
+        Ensure.Not.Null(position, "position");
 
         SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(position);
         if (elements == null)
@@ -59,8 +174,7 @@ public abstract class AbstractWorldMap
 
     @Override
     public AbstractWorldMapElement lastObjectAt(Vector2d position) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null.");
+        Ensure.Not.Null(position, "position");
 
         SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(position);
         if (elements == null)
@@ -78,13 +192,12 @@ public abstract class AbstractWorldMap
 
     @Override
     public void place(AbstractWorldMapElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element");
 
         Vector2d elementPosition = element.getPosition();
 
         if (!isAccessible(elementPosition))
-            throw new IllegalArgumentException("Cannot place place element at not accessible field.");
+            throw new IllegalArgumentException("Cannot place place element at not accessible tile.");
 
         worldMapElements.computeIfAbsent(elementPosition, k -> new TreeSet<>(comparator)).add(element);
 
@@ -98,8 +211,7 @@ public abstract class AbstractWorldMap
     }
 
     public void remove(AbstractWorldMapElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element to remove");
 
         SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(element.getPosition());
         if (elements == null || !elements.remove(element))
@@ -108,34 +220,29 @@ public abstract class AbstractWorldMap
 
     @Override
     public void positionChanged(AbstractWorldMapElement element, Vector2d oldPosition, Vector2d newPosition) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
-        if (oldPosition == null)
-            throw new IllegalArgumentException("'oldPosition' argument can not be null.");
-        if (newPosition == null)
-            throw new IllegalArgumentException("'newPosition' argument can not be null.");
+        Ensure.Not.Null(element, "element");
+        Ensure.Not.Null(oldPosition, "old element's position");
+        Ensure.Not.Null(newPosition, "new element's position");
 
         SortedSet<AbstractWorldMapElement> oldElements = worldMapElements.get(oldPosition);
         if (oldElements == null || !oldElements.remove(element))
-            throw new IllegalStateException("State of element [" + element + "] in map is invalid." + element.position);
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
 
         worldMapElements.computeIfAbsent(newPosition, k -> new TreeSet<>(comparator)).add(element);
     }
 
     @Override
     public void preLayerChanged(AbstractWorldMapElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element");
 
         SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
         if (elementsOnSameTile == null || !elementsOnSameTile.remove(element))
-            throw new IllegalStateException("State of element [" + element + "] in map is invalid." + element.position);
+            throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
     }
 
     @Override
     public void postLayerChanged(AbstractWorldMapElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element");
 
         SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
         if (elementsOnSameTile == null || !elementsOnSameTile.add(element))
@@ -144,8 +251,7 @@ public abstract class AbstractWorldMap
 
     @Override
     public void onElementDestroy(AbstractWorldMapDynamicElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element");
 
         SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
         if (elementsOnSameTile == null || !elementsOnSameTile.remove(element))

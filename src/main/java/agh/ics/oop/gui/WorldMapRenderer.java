@@ -27,10 +27,8 @@ public class WorldMapRenderer
     private final Map<Vector2d, ImageName> tilesToUpdate;
 
     public WorldMapRenderer (AbstractWorldMap map, ResourcesLoader resourcesLoader) {
-        if (map == null)
-            throw new IllegalArgumentException("'map' argument can not be null.");
-        if (resourcesLoader == null)
-            throw new IllegalArgumentException("'resourcesLoader' argument can not be null.");
+        Ensure.Not.Null(map, "world map");
+        Ensure.Not.Null(resourcesLoader, "resource loader");
 
         this.map = map;
         this.resourcesLoader = resourcesLoader;
@@ -74,8 +72,7 @@ public class WorldMapRenderer
     }
 
     private void updatePosition(Vector2d position) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null.");
+        Ensure.Not.Null(position, "update position");
 
         AbstractWorldMapElement elementOnTile = map.firstObjectAt(position);
 
@@ -87,8 +84,7 @@ public class WorldMapRenderer
 
     @Override
     public void directionChanged(AbstractWorldMapDynamicElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element");
 
         updatePosition(element.getPosition());
     }
@@ -101,16 +97,14 @@ public class WorldMapRenderer
 
     @Override
     public void onElementDestroy(AbstractWorldMapDynamicElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element");
 
         updatePosition(element.getPosition());
     }
 
     @Override
     public void elementPlaced(AbstractWorldMapElement element) {
-        if (element == null)
-            throw new IllegalArgumentException("'element' argument can not be null.");
+        Ensure.Not.Null(element, "element");
 
         if (element instanceof IPositionObservable)
             ((IPositionObservable) element).addObserver(this);

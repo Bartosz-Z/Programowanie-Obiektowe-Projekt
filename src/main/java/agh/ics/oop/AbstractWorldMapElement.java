@@ -4,15 +4,13 @@ public abstract class AbstractWorldMapElement {
     protected Vector2d position;
 
     protected AbstractWorldMapElement(Vector2d initialPosition) {
-        if (initialPosition == null)
-            throw new IllegalArgumentException("'initialPosition' argument can not be null.");
+        Ensure.Not.Null(initialPosition, "element's initial position");
 
         position = initialPosition;
     }
 
     public boolean isAt(Vector2d position) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null.");
+        Ensure.Not.Null(position, "position");
 
         return this.position.equals(position);
     }

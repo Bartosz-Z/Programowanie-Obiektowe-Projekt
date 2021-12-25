@@ -7,9 +7,12 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Genome {
     private final int[] genes;
 
+    public Genome() {
+        this(ThreadLocalRandom.current().ints(32, 0, 8).toArray());
+    }
+
     public Genome(int[] genes) {
-        if (genes == null)
-            throw new IllegalArgumentException("'genes' argument can not be null");
+        Ensure.Not.Null(genes, "genome's genes");
         if (genes.length != 32)
             throw new IllegalArgumentException("'genes' argument length should be 32");
 
@@ -22,10 +25,8 @@ public class Genome {
     }
 
     public Genome crossoverWith(Genome otherGenome, float genesRatio) {
-        if (otherGenome == null)
-            throw new IllegalArgumentException("'other' argument can not be null");
-        if (genesRatio < 0 || genesRatio > 1)
-            throw new IllegalArgumentException("'genesRatio' argument should be between 0 and 1");
+        Ensure.Not.Null(otherGenome, "other genome");
+        Ensure.Is.InRange(genesRatio, 0f, 1f, "genes ratio");
 
         int otherGenomeGenesInherited = Math.round(genes.length * genesRatio);
         int[] genesCrossover = new int[32];

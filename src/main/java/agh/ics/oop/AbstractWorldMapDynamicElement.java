@@ -18,8 +18,7 @@ public abstract class AbstractWorldMapDynamicElement
     protected AbstractWorldMapDynamicElement(AbstractWorldMap map, Vector2d initialPosition) {
         super(initialPosition);
 
-        if (map == null)
-            throw new IllegalArgumentException("'map' argument can not be null.");
+        Ensure.Not.Null(map, "world map");
         this.map = map;
 
         this.mapDirection = MapDirection.values()[ThreadLocalRandom.current().nextInt(MapDirection.values().length)];
@@ -28,7 +27,7 @@ public abstract class AbstractWorldMapDynamicElement
         onDestroyObservers = new LinkedList<>();
     }
 
-    protected boolean tryChangePosition(Vector2d newPosition) {
+    public boolean tryChangePosition(Vector2d newPosition) {
         if (map.isAccessible(newPosition)) {
             for (IPositionChangeObserver observer : positionObservers)
                 observer.positionChanged(this, position, newPosition);

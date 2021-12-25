@@ -20,10 +20,8 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
             Genome initialGenome) {
         super(map, initialPosition);
 
-        if (initialEnergy <= 0)
-            throw new IllegalArgumentException("'initialEnergy' argument should be positive");
-        if (initialGenome == null)
-            throw new IllegalArgumentException("'initialGenome' argument can not be null");
+        Ensure.Is.MoreThen(initialEnergy, 0, "animal's initial energy");
+        Ensure.Not.Null(initialGenome, "animal's genome");
 
         currentEnergy = initialEnergy;
         maxEnergy = maximumEnergy;
@@ -32,12 +30,9 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
     }
 
     void updateState(Vector2d position, int energy, Genome genome) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null");
-        if (energy <= 0)
-            throw new IllegalArgumentException("'energy' argument should be positive");
-        if (genome == null)
-            throw new IllegalArgumentException("'genome' argument can not be null");
+        Ensure.Not.Null(position, "animal's new position");
+        Ensure.Is.MoreThen(energy, 0, "animal's new energy");
+        Ensure.Not.Null(genome, "animal's new genome");
 
         this.position = position;
         this.currentEnergy = energy;

@@ -12,15 +12,24 @@ public class WorldMapElementsStorage {
         storedElements = new HashMap<>();
     }
 
-    public <T extends AbstractWorldMapElement>
-    AbstractWorldMapElement restore(Class<T> elementClass) {
+    @SuppressWarnings("unchecked")
+    public <E extends AbstractWorldMapElement>
+    E restore(Class<E> elementClass) {
         Queue<AbstractWorldMapElement> elements = storedElements.get(elementClass);
         if (elements == null)
             return null;
-        return elements.poll();
+        AbstractWorldMapElement element = elements.peek();
+        if (element == null)
+            return null;
+        if (elementClass.isInstance(element))
+            return (E)elements.poll();
+        else
+            throw new IllegalStateException("Storage is in illegal state deu to [" + element + "] element.");
     }
 
     public void store(AbstractWorldMapElement element) {
+        Ensure.Not.Null(element, "element to store");
+
         storedElements.computeIfAbsent(element.getClass(), k -> new ArrayDeque<>()).add(element);
     }
 }

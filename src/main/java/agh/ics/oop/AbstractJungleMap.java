@@ -1,13 +1,12 @@
 package agh.ics.oop;
 
 public abstract class AbstractJungleMap extends AbstractWorldMap {
-    private final Vector2d jungleLowerLeftCorner, jungleUpperRightCorner;
+    public final Vector2d jungleLowerLeftCorner, jungleUpperRightCorner;
 
     protected AbstractJungleMap(Vector2d size, float jungleRatio) {
         super(size);
 
-        if (jungleRatio < 0 || jungleRatio > 1)
-            throw new IllegalArgumentException("'jungleRatio' argument should be between 0 and 1");
+        Ensure.Is.InRange(jungleRatio, 0f, 1f, "jungle ratio");
 
         jungleLowerLeftCorner = new Vector2d(
                 Math.round(size.x() * (1 - jungleRatio) / 2),
@@ -15,6 +14,10 @@ public abstract class AbstractJungleMap extends AbstractWorldMap {
         jungleUpperRightCorner = new Vector2d(
                 Math.round(size.x() * jungleRatio) - 1,
                 Math.round(size.y() * jungleRatio) - 1).add(jungleLowerLeftCorner);
+    }
+
+    public boolean isInsideJungle(Vector2d position) {
+        return position.follows(jungleLowerLeftCorner) && position.precedes(jungleUpperRightCorner);
     }
 
     @Override

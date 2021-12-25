@@ -12,9 +12,8 @@ public class JungleMap extends AbstractJungleMap {
 
     @Override
     public boolean isAccessible(Vector2d position) {
-        if (position == null)
-            throw new IllegalArgumentException("'position' argument can not be null.");
+        Ensure.Not.Null(position, "position");
 
-        return position.follows(Vector2d.zero) && position.precedes(size.subtract(new Vector2d(1, 1)));
+        return position.follows(Vector2d.zero) && position.precedes(new Vector2d(size.x() - 1, size.y() - 1));
     }
 }

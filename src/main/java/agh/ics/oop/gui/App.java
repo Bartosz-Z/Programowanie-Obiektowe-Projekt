@@ -12,20 +12,20 @@ import java.io.FileNotFoundException;
 public class App extends Application {
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
-        int mapWidth = 100;
-        int mapHeight = 100;
+        int mapWidth = 10;
+        int mapHeight = 10;
 
         AbstractJungleMap map = new JungleMap(mapWidth, mapHeight, 0.4f);
 
         ResourcesLoader resourcesLoader = new ResourcesLoader();
         WorldMapRenderer worldMapRenderer = new WorldMapRenderer(map, resourcesLoader);
 
-        GridPane grid = worldMapRenderer.createGrid(8);
+        GridPane grid = worldMapRenderer.createGrid(16);
 
         map.addObserver(worldMapRenderer);
 
         SimulationEngine engine = new SimulationEngine(
-                map, 4000, 200, 200, 50, true);
+                map, 40, 100, 200, 50, true);
         engine.addObserver(worldMapRenderer);
 
         Scene scene = new Scene(grid, 400, 400, Color.BROWN);
