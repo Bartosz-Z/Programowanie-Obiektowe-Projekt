@@ -250,7 +250,7 @@ public abstract class AbstractWorldMap
     }
 
     @Override
-    public void onElementDestroy(AbstractWorldMapDynamicElement element) {
+    public void onElementDestroy(AbstractWorldMapElement element) {
         Ensure.Not.Null(element, "element");
 
         SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);

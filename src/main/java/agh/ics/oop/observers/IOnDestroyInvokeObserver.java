@@ -1,7 +1,7 @@
 package agh.ics.oop.observers;
 
-import agh.ics.oop.AbstractWorldMapDynamicElement;
+import agh.ics.oop.AbstractWorldMapElement;
 
 public interface IOnDestroyInvokeObserver {
-    void onElementDestroy(AbstractWorldMapDynamicElement element);
+    void onElementDestroy(AbstractWorldMapElement element);
 }

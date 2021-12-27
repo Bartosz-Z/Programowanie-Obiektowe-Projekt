@@ -4,11 +4,13 @@ import agh.ics.oop.observers.*;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class SimulationEngine implements Runnable, IOnEpochEndObservable {
+public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOnEpochEndObservable {
     private final AbstractJungleMap map;
     private final List<Animal> animals;
+    private final List<Grass> grasses;
     private final WorldMapElementsStorage elementsStorage;
     private final int animalInitialEnergy, animalMaxEnergy, grassEnergy;
     private int magicEvolutionsLeft;
@@ -33,6 +35,7 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
         this.map = map;
 
         animals = new LinkedList<>();
+        grasses = new LinkedList<>();
         elementsStorage = new WorldMapElementsStorage();
         this.animalInitialEnergy = animalInitialEnergy;
         animalMaxEnergy = animalMaximumEnergy;
@@ -45,7 +48,7 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
     }
 
     private void placeAnimalInMap(Vector2d position, int energy, Genome genome) {
-        Animal animal = (Animal) elementsStorage.restore(Animal.class);
+        Animal animal = elementsStorage.restore(Animal.class);
         if (animal == null) {
             animal = new Animal(map, position, energy, animalMaxEnergy, genome);
             animal.addObserver((IOnDestroyInvokeObserver) map);
@@ -54,6 +57,17 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
 
         map.place(animal);
         animals.add(animal);
+    }
+
+    private void placeGrassInMap(Vector2d position) {
+        Grass grass = elementsStorage.restore(Grass.class);
+        if (grass == null) {
+            grass = new Grass(position, grassEnergy);
+            grass.addObserver(this);
+        } else
+            grass.updateState(position);
+        map.place(grass);
+        grasses.add(grass);
     }
 
     private void activateMagicEvolution() {
@@ -95,55 +109,48 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
     }
 
     private void eatGrasses() {
-        for (Animal animal : animals) {
+        List<? extends AbstractWorldMapElement> elements;
+
+        if (animals.size() > grasses.size())
+            elements = grasses;
+        else
+            elements = animals;
+
+        for (AbstractWorldMapElement element : elements) {
             SortedSet<? extends AbstractWorldMapElement> elementsOnSameTile
-                    = map.getElementsOnPosition(animal.getPosition());
-            if (elementsOnSameTile.last() instanceof Grass grass) {
-                ArrayList<Animal> animalsOnSameTile = new ArrayList<>();
-                for (AbstractWorldMapElement element : elementsOnSameTile) {
-                    if (element instanceof Animal animalOnSameTile) {
-                        if (animalsOnSameTile.size() == 0)
-                            animalsOnSameTile.add(animalOnSameTile);
-                        else if (animalsOnSameTile.get(0).getEnergy() == animalOnSameTile.getEnergy())
-                            animalsOnSameTile.add(animalOnSameTile);
-                        else
-                            break;
-                    }
+                    = map.getElementsOnPosition(element.getPosition());
+
+            Grass grassOnTile = null;
+            for (AbstractWorldMapElement elementOnSameTile : elementsOnSameTile)
+                if (elementOnSameTile instanceof Grass) {
+                    grassOnTile = (Grass) elementOnSameTile;
+                    break;
                 }
-                for (Animal animalOnSameTile : animalsOnSameTile)
-                    animalOnSameTile.addEnergy(grass.energy / animalsOnSameTile.size());
-                map.remove(grass);
-                elementsStorage.store(grass);
+
+            if (grassOnTile != null) {
+                ArrayList<Animal> animalsAllowedToEat = new ArrayList<>();
+                for (AbstractWorldMapElement elementOnSameTile : elementsOnSameTile)
+                    if (elementOnSameTile instanceof Animal animal &&
+                            (animalsAllowedToEat.size() == 0 ||
+                                    animal.getEnergy() == animalsAllowedToEat.get(0).getEnergy()))
+                        animalsAllowedToEat.add(animal);
+                    else
+                        break;
+
+                if (animalsAllowedToEat.size() > 0) {
+                    for (Animal animalAllowedToEast : animalsAllowedToEat)
+                        animalAllowedToEast.addEnergy(grassOnTile.energy / animalsAllowedToEat.size());
+                    map.remove(grassOnTile);
+                    elementsStorage.store(grassOnTile);
+                }
             }
         }
     }
 
-    public void addNewGrassInsideJungle() {
-        Vector2d grassPosition = map.getRandomUnoccupiedPosition(
-                map.jungleLowerLeftCorner,
-                map.jungleUpperRightCorner);
-        if (grassPosition != null) {
-            Grass grass = elementsStorage.restore(Grass.class);
-            if (grass == null)
-                grass = new Grass(grassPosition, grassEnergy);
-            else
-                grass.updateState(grassPosition);
-            map.place(grass);
-        }
-    }
-
-    public void addNewGrassOutsideJungle() {
-        Vector2d grassPosition = map.getRandomUnoccupiedPositionReversed(
-                map.jungleLowerLeftCorner,
-                map.jungleUpperRightCorner);
-        if (grassPosition != null) {
-            Grass grass = elementsStorage.restore(Grass.class);
-            if (grass == null)
-                grass = new Grass(grassPosition, grassEnergy);
-            else
-                grass.updateState(grassPosition);
-            map.place(grass);
-        }
+    private void tryAddGrassInMap(Function<Vector2d, Function<Vector2d, Vector2d>> positionGetter) {
+        Vector2d grassPosition = positionGetter.apply(map.jungleLowerLeftCorner).apply(map.jungleUpperRightCorner);
+        if (grassPosition != null)
+            placeGrassInMap(grassPosition);
     }
 
     private void announceEpochEnd() {
@@ -165,8 +172,8 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
             moveAllAnimals();
             eatGrasses();
             for (int j = 0; j < 1; j++) {
-                addNewGrassInsideJungle();
-                addNewGrassOutsideJungle();
+                tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPosition(a, b));
+                tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPositionReversed(a, b));
             }
             announceEpochEnd();
         }
@@ -181,5 +188,14 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
     @Override
     public void removeObserver(IOnEpochEndInvokeObserver observer) {
         epochEndObservers.remove(observer);
+    }
+
+    @Override
+    public void onElementDestroy(AbstractWorldMapElement element) {
+        if (!(element instanceof Grass grass))
+            throw new IllegalStateException("OnDestroy event of element [" + element + "] should not be observed.");
+
+        if (!grasses.remove(grass))
+            throw new IllegalStateException("Grass [" + grass + "] is not listed.");
     }
 }

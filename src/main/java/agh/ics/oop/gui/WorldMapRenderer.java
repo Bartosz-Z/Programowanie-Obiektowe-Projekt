@@ -96,7 +96,7 @@ public class WorldMapRenderer
     }
 
     @Override
-    public void onElementDestroy(AbstractWorldMapDynamicElement element) {
+    public void onElementDestroy(AbstractWorldMapElement element) {
         Ensure.Not.Null(element, "element");
 
         updatePosition(element.getPosition());
@@ -110,8 +110,7 @@ public class WorldMapRenderer
             ((IPositionObservable) element).addObserver(this);
         if (element instanceof IDirectionObservable)
             ((IDirectionObservable) element).addObserver(this);
-        if (element instanceof IOnDestroyObservable)
-            ((IOnDestroyObservable) element).addObserver(this);
+        element.addObserver(this);
 
         updatePosition(element.getPosition());
     }
