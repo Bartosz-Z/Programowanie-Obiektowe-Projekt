@@ -1,4 +1,4 @@
-package agh.ics.oop;
+package agh.ics.oop.gui;
 
 public enum ImageName {
     TILE_BLANK("BlankTile.png"),

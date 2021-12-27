@@ -1,6 +1,9 @@
-package agh.ics.oop;
+package agh.ics.oop.elements;
 
+import agh.ics.oop.structures.Vector2d;
+import agh.ics.oop.maps.AbstractWorldMap;
 import agh.ics.oop.observers.*;
+import agh.ics.oop.utility.Ensure;
 
 import java.util.LinkedList;
 import java.util.List;

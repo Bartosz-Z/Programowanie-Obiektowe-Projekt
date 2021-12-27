@@ -1,6 +1,8 @@
 package agh.ics.oop.gui;
 
-import agh.ics.oop.*;
+import agh.ics.oop.maps.AbstractJungleMap;
+import agh.ics.oop.maps.JungleMap;
+import agh.ics.oop.SimulationEngine;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
@@ -12,8 +14,8 @@ import java.io.FileNotFoundException;
 public class App extends Application {
     @Override
     public void start(Stage primaryStage) throws FileNotFoundException {
-        int mapWidth = 10;
-        int mapHeight = 10;
+        int mapWidth = 20;
+        int mapHeight = 20;
 
         AbstractJungleMap map = new JungleMap(mapWidth, mapHeight, 0.4f);
 

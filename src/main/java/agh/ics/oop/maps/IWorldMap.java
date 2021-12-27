@@ -1,4 +1,7 @@
-package agh.ics.oop;
+package agh.ics.oop.maps;
+
+import agh.ics.oop.elements.AbstractWorldMapElement;
+import agh.ics.oop.structures.Vector2d;
 
 /**
  * The interface responsible for interacting with the map of the world.
@@ -37,12 +40,11 @@ public interface IWorldMap {
     boolean isOccupied(Vector2d position);
 
     /**
-     * Return a first/last object at a given position.
+     * Return an object at a given position.
      *
      * @param position
      *            The position of the element.
      * @return element or null if the position is not occupied.
      */
-    AbstractWorldMapElement firstObjectAt(Vector2d position);
-    AbstractWorldMapElement lastObjectAt(Vector2d position);
+    AbstractWorldMapElement objectAt(Vector2d position);
 }

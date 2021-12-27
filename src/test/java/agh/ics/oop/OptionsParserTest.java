@@ -1,5 +1,6 @@
 package agh.ics.oop;
 
+import agh.ics.oop.elements.MoveDirection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

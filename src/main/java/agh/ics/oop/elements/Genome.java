@@ -1,4 +1,6 @@
-package agh.ics.oop;
+package agh.ics.oop.elements;
+
+import agh.ics.oop.utility.Ensure;
 
 import java.util.Arrays;
 import java.util.Random;

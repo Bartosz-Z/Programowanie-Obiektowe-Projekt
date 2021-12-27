@@ -1,4 +1,4 @@
-package agh.ics.oop;
+package agh.ics.oop.utility;
 
 public class Ensure {
     private final boolean reversed;
@@ -18,14 +18,6 @@ public class Ensure {
         if (isConditionTrue(object == null))
             throw new IllegalArgumentException(argumentName + (reversed ? " cannot" : " must") + " be null.");
     }
-
-//    public void EqualTo (Object sourceObject, Object targetObject, String sourceArgumentName, String targetArgumentName) {
-//        if (isConditionTrue(!Objects.equals(sourceObject, targetObject)))
-//            throw new IllegalArgumentException(
-//                    sourceArgumentName + " is " + (reversed ? "" : "not ") +
-//                            "equal to " + targetArgumentName + ", but should " +
-//                            (reversed ? "not " : "") + "be.");
-//    }
 
     public <T extends Comparable<T>>
     void InRange(T value, T lowerBound, T upperBound, String argumentName) {

@@ -1,7 +1,11 @@
-package agh.ics.oop;
+package agh.ics.oop.elements;
 
+import agh.ics.oop.gui.ImageName;
+import agh.ics.oop.structures.Vector2d;
+import agh.ics.oop.maps.AbstractWorldMap;
 import agh.ics.oop.observers.ILayerChangeObserver;
 import agh.ics.oop.observers.ILayerObservable;
+import agh.ics.oop.utility.Ensure;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +33,7 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         layerObservers = new LinkedList<>();
     }
 
-    void updateState(Vector2d position, int energy, Genome genome) {
+    public void updateState(Vector2d position, int energy, Genome genome) {
         Ensure.Not.Null(position, "animal's new position");
         Ensure.Is.MoreThen(energy, 0, "animal's new energy");
         Ensure.Not.Null(genome, "animal's new genome");

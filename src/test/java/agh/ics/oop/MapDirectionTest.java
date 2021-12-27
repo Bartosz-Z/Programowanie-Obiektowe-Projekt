@@ -1,5 +1,6 @@
 package agh.ics.oop;
 
+import agh.ics.oop.elements.MapDirection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

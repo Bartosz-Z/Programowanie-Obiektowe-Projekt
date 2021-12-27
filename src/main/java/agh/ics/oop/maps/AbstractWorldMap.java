@@ -1,6 +1,10 @@
-package agh.ics.oop;
+package agh.ics.oop.maps;
 
+import agh.ics.oop.elements.AbstractWorldMapElement;
+import agh.ics.oop.gui.ImageName;
+import agh.ics.oop.structures.Vector2d;
 import agh.ics.oop.observers.*;
+import agh.ics.oop.utility.Ensure;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -39,7 +43,7 @@ public abstract class AbstractWorldMap
 
     @Override
     public boolean isOccupied(Vector2d position) {
-        return firstObjectAt(position) != null;
+        return objectAt(position) != null;
     }
 
     public boolean isAnyUnoccupiedPosition() {
@@ -159,7 +163,7 @@ public abstract class AbstractWorldMap
     }
 
     @Override
-    public AbstractWorldMapElement firstObjectAt(Vector2d position) {
+    public AbstractWorldMapElement objectAt(Vector2d position) {
         Ensure.Not.Null(position, "position");
 
         SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(position);
@@ -167,20 +171,6 @@ public abstract class AbstractWorldMap
             return null;
         try {
             return elements.first();
-        } catch (NoSuchElementException e) {
-            return null;
-        }
-    }
-
-    @Override
-    public AbstractWorldMapElement lastObjectAt(Vector2d position) {
-        Ensure.Not.Null(position, "position");
-
-        SortedSet<AbstractWorldMapElement> elements = worldMapElements.get(position);
-        if (elements == null)
-            return null;
-        try {
-            return elements.last();
         } catch (NoSuchElementException e) {
             return null;
         }
@@ -235,7 +225,7 @@ public abstract class AbstractWorldMap
     public void preLayerChanged(AbstractWorldMapElement element) {
         Ensure.Not.Null(element, "element");
 
-        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
+        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.getPosition());
         if (elementsOnSameTile == null || !elementsOnSameTile.remove(element))
             throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
     }
@@ -244,7 +234,7 @@ public abstract class AbstractWorldMap
     public void postLayerChanged(AbstractWorldMapElement element) {
         Ensure.Not.Null(element, "element");
 
-        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
+        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.getPosition());
         if (elementsOnSameTile == null || !elementsOnSameTile.add(element))
             throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
     }
@@ -253,7 +243,7 @@ public abstract class AbstractWorldMap
     public void onElementDestroy(AbstractWorldMapElement element) {
         Ensure.Not.Null(element, "element");
 
-        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.position);
+        SortedSet<AbstractWorldMapElement> elementsOnSameTile = worldMapElements.get(element.getPosition());
         if (elementsOnSameTile == null || !elementsOnSameTile.remove(element))
             throw new IllegalStateException("State of element [" + element + "] in map is invalid.");
     }

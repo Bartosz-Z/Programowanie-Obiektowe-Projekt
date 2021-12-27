@@ -1,4 +1,7 @@
-package agh.ics.oop;
+package agh.ics.oop.elements;
+
+import agh.ics.oop.gui.ImageName;
+import agh.ics.oop.structures.Vector2d;
 
 public class Grass extends AbstractWorldMapElement {
     public final int energy;
@@ -8,7 +11,7 @@ public class Grass extends AbstractWorldMapElement {
         this.energy = energy;
     }
 
-    void updateState(Vector2d position) {
+    public void updateState(Vector2d position) {
         this.position = position;
     }
 

@@ -1,10 +1,10 @@
 package agh.ics.oop;
 
+import agh.ics.oop.elements.Animal;
+import agh.ics.oop.structures.Vector2d;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.util.jar.Manifest;
 
 import static org.junit.jupiter.api.Assertions.*;
 

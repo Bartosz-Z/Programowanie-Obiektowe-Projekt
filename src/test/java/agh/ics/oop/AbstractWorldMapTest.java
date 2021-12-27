@@ -1,5 +1,8 @@
 package agh.ics.oop;
 
+import agh.ics.oop.maps.AbstractWorldMap;
+import agh.ics.oop.elements.Animal;
+import agh.ics.oop.structures.Vector2d;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,17 +76,17 @@ class AbstractWorldMapTest {
     @Test
     @DisplayName("Test ObjectAt method")
     void testObjectAt() {
-        assertNull(map.firstObjectAt(new Vector2d(4, 2)),
+        assertNull(map.objectAt(new Vector2d(4, 2)),
                 "There should be no objects in empty map");
 
         Animal animal = new Animal(map, new Vector2d(2, 2));
         map.place(animal);
 
-        assertEquals(animal, map.firstObjectAt(animal.getPosition()),
+        assertEquals(animal, map.objectAt(animal.getPosition()),
                 "objectAt method should return animal at position containing that animal");
-        assertNull(map.firstObjectAt(new Vector2d(1, 1)),
+        assertNull(map.objectAt(new Vector2d(1, 1)),
                 "There should be no object in non-empty map at position not containing anything");
-        assertThrows(IllegalArgumentException.class, () -> map.firstObjectAt(null),
+        assertThrows(IllegalArgumentException.class, () -> map.objectAt(null),
                 "objectAt method should throw IllegalArgumentException when argument is null");
     }
 }

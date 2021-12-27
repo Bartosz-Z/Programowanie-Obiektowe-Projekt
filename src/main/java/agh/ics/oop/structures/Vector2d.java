@@ -1,4 +1,6 @@
-package agh.ics.oop;
+package agh.ics.oop.structures;
+
+import agh.ics.oop.utility.Ensure;
 
 public record Vector2d(int x, int y) {
 

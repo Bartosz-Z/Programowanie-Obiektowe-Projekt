@@ -1,5 +1,10 @@
 package agh.ics.oop;
 
+import agh.ics.oop.maps.AbstractWorldMap;
+import agh.ics.oop.elements.Animal;
+import agh.ics.oop.elements.MapDirection;
+import agh.ics.oop.elements.MoveDirection;
+import agh.ics.oop.structures.Vector2d;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

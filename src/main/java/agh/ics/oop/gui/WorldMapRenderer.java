@@ -1,10 +1,15 @@
 package agh.ics.oop.gui;
 
-import agh.ics.oop.*;
+import agh.ics.oop.maps.AbstractWorldMap;
+import agh.ics.oop.elements.AbstractWorldMapDynamicElement;
+import agh.ics.oop.elements.AbstractWorldMapElement;
 import agh.ics.oop.observers.*;
+import agh.ics.oop.structures.Vector2d;
+import agh.ics.oop.utility.Ensure;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.effect.BlendMode;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.ColumnConstraints;
@@ -47,6 +52,8 @@ public class WorldMapRenderer
         for (int i = 0; i < map.size.y(); i++)
             grid.getRowConstraints().add(new RowConstraints(fieldSize));
 
+        List<Node> nodesToAdd = new LinkedList<>();
+
         for (int row = 0; row < grid.getRowCount(); row++)
             for (int col = 0; col < grid.getColumnCount(); col++) {
                 Vector2d tilePosition = new Vector2d(col, map.size.y() - row - 1);
@@ -65,8 +72,10 @@ public class WorldMapRenderer
                 Group tileImage = new Group(tileGround, tileElement);
 
                 GridPane.setConstraints(tileImage, col, row);
-                grid.getChildren().add(tileImage);
+                nodesToAdd.add(tileImage);
             }
+
+        grid.getChildren().addAll(nodesToAdd);
 
         return grid;
     }
@@ -74,7 +83,7 @@ public class WorldMapRenderer
     private void updatePosition(Vector2d position) {
         Ensure.Not.Null(position, "update position");
 
-        AbstractWorldMapElement elementOnTile = map.firstObjectAt(position);
+        AbstractWorldMapElement elementOnTile = map.objectAt(position);
 
         if (elementOnTile == null)
             tilesToUpdate.put(position, ImageName.TILE_BLANK);

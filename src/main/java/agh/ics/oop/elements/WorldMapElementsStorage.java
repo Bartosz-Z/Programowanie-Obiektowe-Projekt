@@ -1,4 +1,7 @@
-package agh.ics.oop;
+package agh.ics.oop.elements;
+
+import agh.ics.oop.elements.AbstractWorldMapElement;
+import agh.ics.oop.utility.Ensure;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;

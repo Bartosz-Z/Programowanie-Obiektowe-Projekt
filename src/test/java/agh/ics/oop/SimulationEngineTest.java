@@ -1,5 +1,9 @@
 package agh.ics.oop;
 
+import agh.ics.oop.maps.AbstractWorldMap;
+import agh.ics.oop.elements.Animal;
+import agh.ics.oop.elements.MapDirection;
+import agh.ics.oop.structures.Vector2d;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,7 +29,7 @@ class SimulationEngineTest {
     @DisplayName("Test if engine was constructed correctly")
     void testEngineConstruction() {
         Arrays.stream(initialPositions)
-                .forEach(position -> assertInstanceOf(Animal.class, map.firstObjectAt(position),
+                .forEach(position -> assertInstanceOf(Animal.class, map.objectAt(position),
                         "There should be animal at position " + position.toString()));
     }
 
@@ -34,10 +38,10 @@ class SimulationEngineTest {
     void testRun() {
         engine.run();
 
-        Object animal_1 = map.firstObjectAt(new Vector2d(2, 1));
+        Object animal_1 = map.objectAt(new Vector2d(2, 1));
         assertInstanceOf(Animal.class, animal_1,
                 "There should be an animal at position (3, 2) at this point");
-        Object animal_2 = map.firstObjectAt(new Vector2d(3, 5));
+        Object animal_2 = map.objectAt(new Vector2d(3, 5));
         assertInstanceOf(Animal.class, animal_2,
                 "There should be an animal at position (2, 4) at this point");
 

@@ -1,7 +1,10 @@
-package agh.ics.oop;
+package agh.ics.oop.elements;
 
+import agh.ics.oop.gui.ImageName;
+import agh.ics.oop.structures.Vector2d;
 import agh.ics.oop.observers.IOnDestroyInvokeObserver;
 import agh.ics.oop.observers.IOnDestroyObservable;
+import agh.ics.oop.utility.Ensure;
 
 import java.util.LinkedList;
 import java.util.List;
