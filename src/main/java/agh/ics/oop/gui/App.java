@@ -17,7 +17,7 @@ public class App extends Application {
         int mapWidth = 20;
         int mapHeight = 20;
 
-        AbstractJungleMap map = new JungleMap(mapWidth, mapHeight, 0.4f);
+        AbstractJungleMap map = new JungleMap(mapWidth, mapHeight, 0.5f);
 
         ResourcesLoader resourcesLoader = new ResourcesLoader();
         WorldMapRenderer worldMapRenderer = new WorldMapRenderer(map, resourcesLoader);
@@ -27,7 +27,7 @@ public class App extends Application {
         map.addObserver(worldMapRenderer);
 
         SimulationEngine engine = new SimulationEngine(
-                map, 40, 100, 200, 50, true);
+                map, 20, 175, 200, 100, true);
         engine.addObserver(worldMapRenderer);
 
         Scene scene = new Scene(grid, 400, 400, Color.BROWN);

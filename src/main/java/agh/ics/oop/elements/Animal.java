@@ -33,6 +33,23 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         layerObservers = new LinkedList<>();
     }
 
+    public Animal crossoverWith(Animal otherAnimal) {
+        Ensure.Not.Null(otherAnimal, "other animal to crossover");
+
+        float parentsGenesRatio = (float)currentEnergy / (currentEnergy + otherAnimal.currentEnergy);
+        int childEnergy = currentEnergy / 4;
+        energyChanged(currentEnergy - childEnergy);
+        childEnergy += otherAnimal.currentEnergy / 4;
+        otherAnimal.energyChanged(otherAnimal.currentEnergy - otherAnimal.currentEnergy / 4);
+
+        return new Animal(
+                map,
+                position,
+                childEnergy,
+                maxEnergy,
+                genome.crossoverWith(otherAnimal.genome, parentsGenesRatio));
+    }
+
     public void updateState(Vector2d position, int energy, Genome genome) {
         Ensure.Not.Null(position, "animal's new position");
         Ensure.Is.MoreThen(energy, 0, "animal's new energy");

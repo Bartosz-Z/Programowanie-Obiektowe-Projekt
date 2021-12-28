@@ -158,6 +158,50 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
             placeGrassInMap(grassPosition);
     }
 
+    private void makeCrossovers() {
+        Set<Vector2d> positionsWithCrossover = new HashSet<>();
+        List<Animal> animalsToBePlaced = new LinkedList<>();
+        int minimalEnergy = animalMaxEnergy % 2 == 0 ? animalMaxEnergy / 2 : animalMaxEnergy / 2 + 1;
+
+        for (Animal animal : animals) {
+            if (!positionsWithCrossover.contains(animal.getPosition())) {
+                SortedSet<? extends AbstractWorldMapElement> elementsOnSameTile
+                        = map.getElementsOnPosition(animal.getPosition());
+
+                LinkedList<Animal> animalsAllowedToCrossover = new LinkedList<>();
+                for (AbstractWorldMapElement element : elementsOnSameTile) {
+                    if (element instanceof Animal animalOnSameTile && animalOnSameTile.getEnergy() >= minimalEnergy) {
+                        if (animalsAllowedToCrossover.size() == 0 ||
+                                animalOnSameTile.getEnergy() == animalsAllowedToCrossover.getFirst().getEnergy() ||
+                                animalsAllowedToCrossover.size() == 1 ||
+                                animalOnSameTile.getEnergy() == animalsAllowedToCrossover.get(1).getEnergy())
+                            animalsAllowedToCrossover.add(animalOnSameTile);
+                        else
+                            break;
+                    } else
+                        break;
+                }
+
+                if (animalsAllowedToCrossover.size() >= 2) {
+                    Random random = ThreadLocalRandom.current();
+                    positionsWithCrossover.add(animal.getPosition());
+
+                    Animal firstAnimal = animalsAllowedToCrossover.get(random.nextInt(animalsAllowedToCrossover.size()));
+                    animalsAllowedToCrossover.remove(firstAnimal);
+                    Animal secondAnimal = animalsAllowedToCrossover.get(random.nextInt(animalsAllowedToCrossover.size()));
+
+                    animalsToBePlaced.add(firstAnimal.crossoverWith(secondAnimal));
+                }
+            }
+        }
+
+        for (Animal animal : animalsToBePlaced) {
+            animal.addObserver((IOnDestroyInvokeObserver) map);
+            map.place(animal);
+        }
+        animals.addAll(animalsToBePlaced);
+    }
+
     private void announceEpochEnd() {
         for (IOnEpochEndInvokeObserver observer : epochEndObservers)
             observer.epochEnd();
@@ -167,15 +211,16 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
     public void run() {
         long timer = System.currentTimeMillis();
         announceEpochEnd();
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 4000; i++) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(5);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
             destroyDeadAnimals();
             moveAllAnimals();
             eatGrasses();
+            makeCrossovers();
             for (int j = 0; j < 1; j++) {
                 tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPosition(a, b));
                 tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPositionReversed(a, b));
@@ -183,6 +228,8 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
             announceEpochEnd();
         }
         System.out.println(System.currentTimeMillis() - timer);
+        for (Animal animal : animals)
+            System.out.println(animal.getGenome());
     }
 
     @Override

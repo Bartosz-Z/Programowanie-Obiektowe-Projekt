@@ -77,4 +77,9 @@ public class Genome {
     public int hashCode() {
         return Arrays.hashCode(genes);
     }
+
+    @Override
+    public String toString() {
+        return Arrays.toString(genes);
+    }
 }

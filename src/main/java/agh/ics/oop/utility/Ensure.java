@@ -26,9 +26,9 @@ public class Ensure {
 
     public <T extends Comparable<T>>
     void InRange(T value, T lowerBound, T upperBound, String argumentName, String rangeName) {
-        if (isConditionTrue(value.compareTo(lowerBound) >= 0 || value.compareTo(upperBound) <= 0))
+        if (isConditionTrue(value.compareTo(lowerBound) >= 0 && value.compareTo(upperBound) <= 0))
             throw new IllegalArgumentException(
-                    argumentName + " [ " + value + "] is " + (reversed ? "" : "not ") +
+                    argumentName + " [" + value + "] is " + (reversed ? "" : "not ") +
                             "within range " + rangeName + " (" + lowerBound + ", " + upperBound + "), but should " +
                             (reversed ? "not " : "") + "be.");
     }
