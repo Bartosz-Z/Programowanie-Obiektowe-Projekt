@@ -45,6 +45,13 @@ public abstract class AbstractWorldMapDynamicElement
     }
 
     @Override
+    public void destroy() {
+        super.destroy();
+        positionObservers.clear();
+        directionObservers.clear();
+    }
+
+    @Override
     public void addObserver(IPositionChangeObserver observer) {
         positionObservers.add(observer);
     }

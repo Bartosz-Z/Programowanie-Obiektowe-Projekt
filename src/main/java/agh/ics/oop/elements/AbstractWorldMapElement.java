@@ -33,6 +33,7 @@ public abstract class AbstractWorldMapElement implements IOnDestroyObservable {
     public void destroy() {
         for (IOnDestroyInvokeObserver observer : onDestroyObservers)
             observer.onElementDestroy(this);
+        onDestroyObservers.clear();
     }
 
     @Override

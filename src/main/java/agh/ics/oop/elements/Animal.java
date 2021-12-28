@@ -1,10 +1,10 @@
 package agh.ics.oop.elements;
 
 import agh.ics.oop.gui.ImageName;
-import agh.ics.oop.structures.Vector2d;
 import agh.ics.oop.maps.AbstractWorldMap;
 import agh.ics.oop.observers.ILayerChangeObserver;
 import agh.ics.oop.observers.ILayerObservable;
+import agh.ics.oop.structures.Vector2d;
 import agh.ics.oop.utility.Ensure;
 
 import java.util.LinkedList;
@@ -16,7 +16,7 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
     private Genome genome;
     protected final List<ILayerChangeObserver> layerObservers;
 
-    public Animal(
+    private Animal(
             AbstractWorldMap map,
             Vector2d initialPosition,
             int initialEnergy,
@@ -25,6 +25,7 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         super(map, initialPosition);
 
         Ensure.Is.MoreThen(initialEnergy, 0, "animal's initial energy");
+        Ensure.Is.MoreThen(maximumEnergy, 0, "animal's maximum energy");
         Ensure.Not.Null(initialGenome, "animal's genome");
 
         currentEnergy = initialEnergy;
@@ -33,8 +34,24 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         layerObservers = new LinkedList<>();
     }
 
+    public static Animal createAnimal(
+            AbstractWorldMap map,
+            Vector2d initialPosition,
+            int initialEnergy,
+            int maximumEnergy,
+            Genome initialGenome) {
+
+        Animal animal = WorldMapElementsStorage.restore(Animal.class);
+        if (animal == null) {
+            return new Animal(map, initialPosition, initialEnergy, maximumEnergy, initialGenome);
+        } else {
+            animal.updateState(initialPosition, initialEnergy, initialGenome);
+            return animal;
+        }
+    }
+
     public Animal crossoverWith(Animal otherAnimal) {
-        Ensure.Not.Null(otherAnimal, "other animal to crossover");
+        Ensure.Not.Null(otherAnimal, "other animal to crossover with");
 
         float parentsGenesRatio = (float)currentEnergy / (currentEnergy + otherAnimal.currentEnergy);
         int childEnergy = currentEnergy / 4;
@@ -42,15 +59,15 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         childEnergy += otherAnimal.currentEnergy / 4;
         otherAnimal.energyChanged(otherAnimal.currentEnergy - otherAnimal.currentEnergy / 4);
 
-        return new Animal(
+        return createAnimal(
                 map,
                 position,
                 childEnergy,
                 maxEnergy,
-                genome.crossoverWith(otherAnimal.genome, parentsGenesRatio));
+                genome.crossoverWith(otherAnimal.getGenome(), parentsGenesRatio));
     }
 
-    public void updateState(Vector2d position, int energy, Genome genome) {
+    private void updateState(Vector2d position, int energy, Genome genome) {
         Ensure.Not.Null(position, "animal's new position");
         Ensure.Is.MoreThen(energy, 0, "animal's new energy");
         Ensure.Not.Null(genome, "animal's new genome");
@@ -114,6 +131,12 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
             case WEST -> ImageName.TILE_ANIMAL_WEST;
             case NORTH_WEST -> ImageName.TILE_ANIMAL_NORTH_WEST;
         };
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        layerObservers.clear();
     }
 
     @Override

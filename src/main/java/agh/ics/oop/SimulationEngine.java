@@ -15,7 +15,6 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
     private final AbstractJungleMap map;
     private final List<Animal> animals;
     private final List<Grass> grasses;
-    private final WorldMapElementsStorage elementsStorage;
     private final int animalInitialEnergy, animalMaxEnergy, grassEnergy;
     private int magicEvolutionsLeft;
 
@@ -40,7 +39,6 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
 
         animals = new LinkedList<>();
         grasses = new LinkedList<>();
-        elementsStorage = new WorldMapElementsStorage();
         this.animalInitialEnergy = animalInitialEnergy;
         animalMaxEnergy = animalMaximumEnergy;
         this.grassEnergy = grassEnergy;
@@ -52,24 +50,16 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
     }
 
     private void placeAnimalInMap(Vector2d position, int energy, Genome genome) {
-        Animal animal = elementsStorage.restore(Animal.class);
-        if (animal == null) {
-            animal = new Animal(map, position, energy, animalMaxEnergy, genome);
-            animal.addObserver((IOnDestroyInvokeObserver) map);
-        } else
-            animal.updateState(position, energy, genome);
+        Animal animal = Animal.createAnimal(map, position, energy, animalMaxEnergy, genome);
+        animal.addObserver((IOnDestroyInvokeObserver) map);
 
         map.place(animal);
         animals.add(animal);
     }
 
     private void placeGrassInMap(Vector2d position) {
-        Grass grass = elementsStorage.restore(Grass.class);
-        if (grass == null) {
-            grass = new Grass(position, grassEnergy);
-            grass.addObserver(this);
-        } else
-            grass.updateState(position);
+        Grass grass = Grass.createGrass(position, grassEnergy);
+        grass.addObserver(this);
 
         map.place(grass);
         grasses.add(grass);
@@ -146,7 +136,7 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
                     for (Animal animalAllowedToEast : animalsAllowedToEat)
                         animalAllowedToEast.addEnergy(grassOnTile.energy / animalsAllowedToEat.size());
                     map.remove(grassOnTile);
-                    elementsStorage.store(grassOnTile);
+                    WorldMapElementsStorage.store(grassOnTile);
                 }
             }
         }
