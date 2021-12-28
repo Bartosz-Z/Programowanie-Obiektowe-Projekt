@@ -45,7 +45,6 @@ public class WorldMapRenderer
         grid = new GridPane();
 
         grid.setAlignment(Pos.CENTER);
-        grid.setGridLinesVisible(true);
 
         for (int i = 0; i < map.size.x(); i++)
             grid.getColumnConstraints().add(new ColumnConstraints(fieldSize));
@@ -83,12 +82,14 @@ public class WorldMapRenderer
     private void updatePosition(Vector2d position) {
         Ensure.Not.Null(position, "update position");
 
-        AbstractWorldMapElement elementOnTile = map.objectAt(position);
+        if (position.follows(Vector2d.zero) &&position.precedes(new Vector2d(map.size.x() - 1, map.size.y() - 1))) {
+            AbstractWorldMapElement elementOnTile = map.objectAt(position);
 
-        if (elementOnTile == null)
-            tilesToUpdate.put(position, ImageName.TILE_BLANK);
-        else
-            tilesToUpdate.put(position, elementOnTile.getImageName());
+            if (elementOnTile == null)
+                tilesToUpdate.put(position, ImageName.TILE_BLANK);
+            else
+                tilesToUpdate.put(position, elementOnTile.getImageName());
+        }
     }
 
     @Override
@@ -99,7 +100,7 @@ public class WorldMapRenderer
     }
 
     @Override
-    public void positionChanged(AbstractWorldMapElement element, Vector2d oldPosition, Vector2d newPosition) {
+    public void positionChanged(AbstractWorldMapDynamicElement element, Vector2d oldPosition, Vector2d newPosition) {
         updatePosition(oldPosition);
         updatePosition(newPosition);
     }

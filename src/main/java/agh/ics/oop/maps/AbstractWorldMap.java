@@ -1,5 +1,6 @@
 package agh.ics.oop.maps;
 
+import agh.ics.oop.elements.AbstractWorldMapDynamicElement;
 import agh.ics.oop.elements.AbstractWorldMapElement;
 import agh.ics.oop.gui.ImageName;
 import agh.ics.oop.structures.Vector2d;
@@ -187,7 +188,7 @@ public abstract class AbstractWorldMap
         Vector2d elementPosition = element.getPosition();
 
         if (!isAccessible(elementPosition))
-            throw new IllegalArgumentException("Cannot place place element at not accessible tile.");
+            throw new IllegalArgumentException("Cannot place place element at not accessible tile." + elementPosition + " " + Thread.currentThread().getName());
 
         worldMapElements.computeIfAbsent(elementPosition, k -> new TreeSet<>(comparator)).add(element);
 
@@ -195,6 +196,7 @@ public abstract class AbstractWorldMap
             ((IPositionObservable) element).addObserver(this);
         if (element instanceof ILayerObservable)
             ((ILayerObservable) element).addObserver(this);
+        element.addObserver(this);
 
         for (IOnPlaceElementInvokeObserver observer : onPlaceObservers)
             observer.elementPlaced(element);
@@ -209,7 +211,7 @@ public abstract class AbstractWorldMap
     }
 
     @Override
-    public void positionChanged(AbstractWorldMapElement element, Vector2d oldPosition, Vector2d newPosition) {
+    public void positionChanged(AbstractWorldMapDynamicElement element, Vector2d oldPosition, Vector2d newPosition) {
         Ensure.Not.Null(element, "element");
         Ensure.Not.Null(oldPosition, "old element's position");
         Ensure.Not.Null(newPosition, "new element's position");

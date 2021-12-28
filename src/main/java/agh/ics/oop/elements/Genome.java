@@ -16,9 +16,9 @@ public class Genome {
     public Genome(int[] genes) {
         Ensure.Not.Null(genes, "genome's genes");
         if (genes.length != 32)
-            throw new IllegalArgumentException("'genes' argument length should be 32");
+            throw new IllegalArgumentException("'genes' argument length should be 32, but is " + genes.length + ".");
 
-        this.genes = genes;
+        this.genes = genes.clone();
         Arrays.sort(this.genes);
     }
 
@@ -57,10 +57,6 @@ public class Genome {
 
     public int getGene(int geneIndex) {
         return genes[geneIndex];
-    }
-
-    public Genome getGenomeClone() {
-        return new Genome(genes);
     }
 
     @Override

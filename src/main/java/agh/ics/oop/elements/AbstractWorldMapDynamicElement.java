@@ -12,7 +12,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public abstract class AbstractWorldMapDynamicElement
         extends AbstractWorldMapElement
         implements IMovable, IPositionObservable, IDirectionObservable {
-    protected final AbstractWorldMap map;
+    protected AbstractWorldMap map;
     protected MapDirection mapDirection;
     protected final List<IPositionChangeObserver> positionObservers;
     protected final List<IDirectionChangeObserver> directionObservers;
@@ -23,16 +23,17 @@ public abstract class AbstractWorldMapDynamicElement
         Ensure.Not.Null(map, "world map");
         this.map = map;
 
-        this.mapDirection = MapDirection.values()[ThreadLocalRandom.current().nextInt(MapDirection.values().length)];
+        mapDirection = MapDirection.values()[ThreadLocalRandom.current().nextInt(MapDirection.values().length)];
         positionObservers = new LinkedList<>();
         directionObservers = new LinkedList<>();
     }
 
     public boolean tryChangePosition(Vector2d newPosition) {
         if (map.isAccessible(newPosition)) {
-            for (IPositionChangeObserver observer : positionObservers)
-                observer.positionChanged(this, position, newPosition);
+            Vector2d oldPosition = position;
             position = newPosition;
+            for (IPositionChangeObserver observer : positionObservers)
+                observer.positionChanged(this, oldPosition, newPosition);
             return true;
         }
         return false;

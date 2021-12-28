@@ -5,13 +5,13 @@ import agh.ics.oop.maps.AbstractJungleMap;
 import agh.ics.oop.observers.*;
 import agh.ics.oop.structures.Vector2d;
 import agh.ics.oop.utility.Ensure;
+import javafx.util.Pair;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOnEpochEndObservable {
+public class SimulationEngine implements Runnable, IOnEpochEndObservable {
     private final AbstractJungleMap map;
     private final List<Animal> animals;
     private final List<Grass> grasses;
@@ -51,7 +51,6 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
 
     private void placeAnimalInMap(Vector2d position, int energy, Genome genome) {
         Animal animal = Animal.createAnimal(map, position, energy, animalMaxEnergy, genome);
-        animal.addObserver((IOnDestroyInvokeObserver) map);
 
         map.place(animal);
         animals.add(animal);
@@ -59,44 +58,48 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
 
     private void placeGrassInMap(Vector2d position) {
         Grass grass = Grass.createGrass(position, grassEnergy);
-        grass.addObserver(this);
 
         map.place(grass);
         grasses.add(grass);
     }
 
-    private void activateMagicEvolution() {
+    private List<Pair<Vector2d, Genome>> activateMagicEvolution() {
+        Ensure.Is.MoreThen(magicEvolutionsLeft, 0, "magic evolutions left");
+        if (animals.size() != 5)
+            throw new IllegalStateException("There should be 5 animals on map, but " + animals.size() + " was found.");
         magicEvolutionsLeft--;
-        Supplier<Genome> getGenome;
 
-        if (animals.size() == 0) {
-            getGenome = Genome::new;
-        } else {
-            Random random = ThreadLocalRandom.current();
-            int animalsCount = animals.size();
-            getGenome = () -> animals.get(random.nextInt(animalsCount)).getGenome();
-        }
-
-        for (int i = 0; i < 5; i++) {
-            Vector2d animalPosition = map.getRandomUnoccupiedPosition();
-            if (animalPosition != null)
-                placeAnimalInMap(animalPosition, animalInitialEnergy, getGenome.get());
+        List<Pair<Vector2d, Genome>> animalsToPlace = new LinkedList<>();
+        for (Animal animal : animals) {
+            Vector2d magicAnimalPosition = map.getRandomUnoccupiedPosition();
+            if (magicAnimalPosition != null)
+                animalsToPlace.add(new Pair<>(magicAnimalPosition, animal.getGenome()));
             else
                 break;
         }
+
+        return animalsToPlace;
     }
 
     private void destroyDeadAnimals() {
+        List<Pair<Vector2d, Genome>> magicAnimals = null;
+
         Iterator<Animal> iterator = animals.iterator();
         while (iterator.hasNext()) {
             Animal animal = iterator.next();
             if (!animal.isAlive()) {
                 animal.destroy();
                 iterator.remove();
+                WorldMapElementsStorage.store(animal);
+
+                if (animals.size() == 5 && magicEvolutionsLeft > 0 && magicAnimals == null)
+                    magicAnimals = activateMagicEvolution();
             }
         }
-        if (animals.size() <= 5 && magicEvolutionsLeft > 0)
-            activateMagicEvolution();
+
+        if (magicAnimals != null)
+            for (Pair<Vector2d, Genome> animalInfo : magicAnimals)
+                placeAnimalInMap(animalInfo.getKey(), animalInitialEnergy, animalInfo.getValue());
     }
 
     private void moveAllAnimals() {
@@ -111,7 +114,10 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
         else
             elements = animals;
 
-        for (AbstractWorldMapElement element : elements) {
+        Iterator<? extends AbstractWorldMapElement> iterator = elements.iterator();
+        while (iterator.hasNext()) {
+            AbstractWorldMapElement element = iterator.next();
+
             SortedSet<? extends AbstractWorldMapElement> elementsOnSameTile
                     = map.getElementsOnPosition(element.getPosition());
 
@@ -135,7 +141,11 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
                 if (animalsAllowedToEat.size() > 0) {
                     for (Animal animalAllowedToEast : animalsAllowedToEat)
                         animalAllowedToEast.addEnergy(grassOnTile.energy / animalsAllowedToEat.size());
-                    map.remove(grassOnTile);
+                    grassOnTile.destroy();
+                    if (element instanceof Grass)
+                        iterator.remove();
+                    else if (!grasses.remove(grassOnTile))
+                        throw new IllegalStateException("Grass [" + grassOnTile + "] is not listed.");
                     WorldMapElementsStorage.store(grassOnTile);
                 }
             }
@@ -185,10 +195,8 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
             }
         }
 
-        for (Animal animal : animalsToBePlaced) {
-            animal.addObserver((IOnDestroyInvokeObserver) map);
+        for (Animal animal : animalsToBePlaced)
             map.place(animal);
-        }
         animals.addAll(animalsToBePlaced);
     }
 
@@ -207,6 +215,7 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
             destroyDeadAnimals();
             moveAllAnimals();
             eatGrasses();
@@ -230,14 +239,5 @@ public class SimulationEngine implements Runnable, IOnDestroyInvokeObserver, IOn
     @Override
     public void removeObserver(IOnEpochEndInvokeObserver observer) {
         epochEndObservers.remove(observer);
-    }
-
-    @Override
-    public void onElementDestroy(AbstractWorldMapElement element) {
-        if (!(element instanceof Grass grass))
-            throw new IllegalStateException("OnDestroy event of element [" + element + "] should not be observed.");
-
-        if (!grasses.remove(grass))
-            throw new IllegalStateException("Grass [" + grass + "] is not listed.");
     }
 }

@@ -45,7 +45,7 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         if (animal == null) {
             return new Animal(map, initialPosition, initialEnergy, maximumEnergy, initialGenome);
         } else {
-            animal.updateState(initialPosition, initialEnergy, initialGenome);
+            animal.updateState(map, initialPosition, initialEnergy, initialGenome);
             return animal;
         }
     }
@@ -67,11 +67,13 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
                 genome.crossoverWith(otherAnimal.getGenome(), parentsGenesRatio));
     }
 
-    private void updateState(Vector2d position, int energy, Genome genome) {
+    private void updateState(AbstractWorldMap map, Vector2d position, int energy, Genome genome) {
+        Ensure.Not.Null(map, "animal's world map");
         Ensure.Not.Null(position, "animal's new position");
         Ensure.Is.MoreThen(energy, 0, "animal's new energy");
         Ensure.Not.Null(genome, "animal's new genome");
 
+        this.map = map;
         this.position = position;
         this.currentEnergy = energy;
         this.genome = genome;
