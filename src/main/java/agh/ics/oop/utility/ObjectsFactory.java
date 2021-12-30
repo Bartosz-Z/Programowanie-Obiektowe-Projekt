@@ -27,7 +27,7 @@ public class ObjectsFactory {
         try {
             return clazz.getConstructor(classesOfArgs).newInstance(args);
         } catch (Exception e) {
-            return null;
+            throw new IllegalArgumentException("Can't create object of that args: " + Arrays.toString(args));
         }
     }
 }

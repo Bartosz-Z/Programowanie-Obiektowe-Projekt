@@ -12,7 +12,12 @@ import java.util.List;
 
 public class Animal extends AbstractWorldMapDynamicElement implements ILayerObservable {
     private int currentEnergy;
-    private final int maxEnergy;
+    private final int
+            maxEnergy,
+            forwardEnergyCost,
+            backwardEnergyCost,
+            rotationEnergyCost;
+    private int offspringCount, age;
     private Genome genome;
     protected final List<ILayerChangeObserver> layerObservers;
 
@@ -21,6 +26,9 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
             Vector2d initialPosition,
             int initialEnergy,
             int maximumEnergy,
+            int forwardEnergyCost,
+            int backwardEnergyCost,
+            int rotationEnergyCost,
             Genome initialGenome) {
         super(map, initialPosition);
 
@@ -30,6 +38,11 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
         currentEnergy = initialEnergy;
         maxEnergy = maximumEnergy;
+        this.forwardEnergyCost = forwardEnergyCost;
+        this.backwardEnergyCost = backwardEnergyCost;
+        this.rotationEnergyCost = rotationEnergyCost;
+        offspringCount = 0;
+        age = 0;
         genome = initialGenome;
         layerObservers = new LinkedList<>();
     }
@@ -39,11 +52,22 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
             Vector2d initialPosition,
             int initialEnergy,
             int maximumEnergy,
+            int forwardEnergyCost,
+            int backwardEnergyCost,
+            int rotationEnergyCost,
             Genome initialGenome) {
 
         Animal animal = WorldMapElementsStorage.restore(Animal.class);
         if (animal == null) {
-            return new Animal(map, initialPosition, initialEnergy, maximumEnergy, initialGenome);
+            return new Animal(
+                    map,
+                    initialPosition,
+                    initialEnergy,
+                    maximumEnergy,
+                    forwardEnergyCost,
+                    backwardEnergyCost,
+                    rotationEnergyCost,
+                    initialGenome);
         } else {
             animal.updateState(map, initialPosition, initialEnergy, initialGenome);
             return animal;
@@ -59,11 +83,17 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         childEnergy += otherAnimal.currentEnergy / 4;
         otherAnimal.energyChanged(otherAnimal.currentEnergy - otherAnimal.currentEnergy / 4);
 
+        offspringCount++;
+        otherAnimal.offspringCount++;
+
         return createAnimal(
                 map,
                 position,
                 childEnergy,
                 maxEnergy,
+                forwardEnergyCost,
+                backwardEnergyCost,
+                rotationEnergyCost,
                 genome.crossoverWith(otherAnimal.getGenome(), parentsGenesRatio));
     }
 
@@ -77,6 +107,8 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
         this.position = position;
         this.currentEnergy = energy;
         this.genome = genome;
+        offspringCount = 0;
+        age = 0;
     }
 
     private void energyChanged(int newEnergy) {
@@ -93,27 +125,27 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
         if (activeGene == 0) {
              if (tryChangePosition(position.add(mapDirection.toUnitVector())))
-                 energyChanged(currentEnergy - 10);
-             else
-                 energyChanged(currentEnergy - 4);
+                 energyChanged(currentEnergy - forwardEnergyCost);
         } else if (activeGene == 4) {
             if (tryChangePosition(position.subtract(mapDirection.toUnitVector())))
-                energyChanged(currentEnergy - 11);
-            else
-                energyChanged(currentEnergy - 4);
+                energyChanged(currentEnergy - backwardEnergyCost);
         } else if (activeGene < 4) {
-            energyChanged(currentEnergy - 5);
+            energyChanged(currentEnergy - rotationEnergyCost);
             MapDirection newDirection = mapDirection;
             for (int i = 0; i < activeGene; i++)
                 newDirection = newDirection.next();
             changeDirection(newDirection);
         } else {
-            energyChanged(currentEnergy - 5);
+            energyChanged(currentEnergy - rotationEnergyCost);
             MapDirection newDirection = mapDirection;
             for (int i = 4; i < activeGene; i++)
                 newDirection = newDirection.previous();
             changeDirection(newDirection);
         }
+    }
+
+    public void makeOlder() {
+        age++;
     }
 
     @Override
@@ -169,5 +201,13 @@ public class Animal extends AbstractWorldMapDynamicElement implements ILayerObse
 
     public float getEnergyPercentage() {
         return ((float) currentEnergy) / maxEnergy;
+    }
+
+    public int getOffspringCount() {
+        return offspringCount;
+    }
+
+    public int getAge() {
+        return age;
     }
 }

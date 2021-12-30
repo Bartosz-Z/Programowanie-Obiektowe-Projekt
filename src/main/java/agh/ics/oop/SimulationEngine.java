@@ -3,35 +3,59 @@ package agh.ics.oop;
 import agh.ics.oop.elements.*;
 import agh.ics.oop.maps.AbstractJungleMap;
 import agh.ics.oop.observers.*;
+import agh.ics.oop.structures.EpochEndInfo;
 import agh.ics.oop.structures.Vector2d;
 import agh.ics.oop.utility.Ensure;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.util.Pair;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
-public class SimulationEngine implements Runnable, IOnEpochEndObservable {
+public class SimulationEngine implements Runnable, IOnEpochEndObservable, IOnEpochEndGUIObservable {
     private final AbstractJungleMap map;
     private final List<Animal> animals;
     private final List<Grass> grasses;
-    private final int animalInitialEnergy, animalMaxEnergy, grassEnergy;
+    private final int
+            animalInitialEnergy,
+            animalMaxEnergy,
+            animalForwardEnergyCost,
+            animalBackwardEnergyCost,
+            animalRotationEnergyCost,
+            grassEnergy,
+            timeDelay;
     private int magicEvolutionsLeft;
 
     private final List<IOnEpochEndInvokeObserver> epochEndObservers;
+    private final List<IOnEpochEndInvokeGUIObserver> epochEndGUIObservers;
+    private boolean isStopped, isAlive;
+
+    private int animalsDead;
+    private final List<Genome> dominantGenomes;
+    private float averageAnimalsEnergy, averageAnimalAliveTime, averageAnimalsOffspringCount;
 
     public SimulationEngine(
             AbstractJungleMap map,
             int animalsCount,
             int animalInitialEnergy,
             int animalMaximumEnergy,
+            int animalForwardEnergyCost,
+            int animalBackwardEnergyCost,
+            int animalRotationEnergyCost,
             int grassEnergy,
+            int timeDelay,
             boolean isMagicEvolution) {
         Ensure.Not.Null(map, "world map");
         Ensure.Not.LessThen(animalsCount, 1, "animals count");
         Ensure.Is.MoreThen(animalInitialEnergy, 0, "animal's initial energy");
         Ensure.Is.MoreThen(animalMaximumEnergy, 0, "animal's maximum energy");
+        Ensure.Is.MoreThen(animalForwardEnergyCost, 0, "animal's forward cost");
+        Ensure.Is.MoreThen(animalBackwardEnergyCost, 0, "animal's backward cost");
+        Ensure.Is.MoreThen(animalRotationEnergyCost, 0, "animal's rotation cost");
         Ensure.Is.MoreThen(grassEnergy, 0, "grass's energy");
+        Ensure.Is.MoreThen(timeDelay, 0, "time delay between epochs");
         Ensure.Not.MoreThen(animalsCount, map.size.x() * map.size.y(),
                 "animals count", "tiles in world map");
 
@@ -41,16 +65,37 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
         grasses = new LinkedList<>();
         this.animalInitialEnergy = animalInitialEnergy;
         animalMaxEnergy = animalMaximumEnergy;
+        this.animalForwardEnergyCost = animalForwardEnergyCost;
+        this.animalBackwardEnergyCost = animalBackwardEnergyCost;
+        this.animalRotationEnergyCost = animalRotationEnergyCost;
         this.grassEnergy = grassEnergy;
+        this.timeDelay = timeDelay;
         magicEvolutionsLeft = isMagicEvolution ? 3 : 0;
         epochEndObservers = new LinkedList<>();
+        epochEndGUIObservers = new LinkedList<>();
+        isStopped = false;
+        isAlive = true;
+
+        dominantGenomes = new LinkedList<>();
+        averageAnimalsEnergy = 0;
+        averageAnimalAliveTime = 0;
+        averageAnimalsOffspringCount = 0;
+        animalsDead = 0;
 
         for (int i = 0; i < animalsCount; i++)
             placeAnimalInMap(map.getRandomUnoccupiedPosition(), this.animalInitialEnergy, new Genome());
     }
 
     private void placeAnimalInMap(Vector2d position, int energy, Genome genome) {
-        Animal animal = Animal.createAnimal(map, position, energy, animalMaxEnergy, genome);
+        Animal animal = Animal.createAnimal(
+                map,
+                position,
+                energy,
+                animalMaxEnergy,
+                animalForwardEnergyCost,
+                animalBackwardEnergyCost,
+                animalRotationEnergyCost,
+                genome);
 
         map.place(animal);
         animals.add(animal);
@@ -67,6 +112,10 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
         Ensure.Is.MoreThen(magicEvolutionsLeft, 0, "magic evolutions left");
         if (animals.size() != 5)
             throw new IllegalStateException("There should be 5 animals on map, but " + animals.size() + " was found.");
+
+        Platform.runLater(() ->
+                new Alert(Alert.AlertType.INFORMATION, "Magic evolution activated.").showAndWait());
+
         magicEvolutionsLeft--;
 
         List<Pair<Vector2d, Genome>> animalsToPlace = new LinkedList<>();
@@ -89,6 +138,11 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
             Animal animal = iterator.next();
             if (!animal.isAlive()) {
                 animal.destroy();
+                if (animalsDead > 0)
+                    averageAnimalAliveTime *= (float) animalsDead / (animalsDead + 1);
+                else
+                    animalsDead++;
+                averageAnimalAliveTime += (float) animal.getAge() / ++animalsDead;
                 iterator.remove();
                 WorldMapElementsStorage.store(animal);
 
@@ -103,7 +157,10 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
     }
 
     private void moveAllAnimals() {
-        animals.forEach(Animal::move);
+        animals.forEach(animal -> {
+            animal.move();
+            animal.makeOlder();
+        });
     }
 
     private void eatGrasses() {
@@ -203,32 +260,83 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
     private void announceEpochEnd() {
         for (IOnEpochEndInvokeObserver observer : epochEndObservers)
             observer.epochEnd();
+        for (IOnEpochEndInvokeGUIObserver observer : epochEndGUIObservers)
+            Platform.runLater(() -> observer.epochEnd(new EpochEndInfo(
+                    animals.size(),
+                    grasses.size(),
+                    averageAnimalsEnergy,
+                    averageAnimalAliveTime,
+                    averageAnimalsOffspringCount,
+                    dominantGenomes.stream().map(Genome::toString).toList()
+            )));
+    }
+
+    private void calculateDominantGenomes() {
+        dominantGenomes.clear();
+        Map<Genome, Integer> genomesCount = new HashMap<>();
+        int mostGenomesCount = 0;
+        for (Animal animal : animals) {
+            Genome animalGenome = animal.getGenome();
+            genomesCount.putIfAbsent(animalGenome, 0);
+            int currentGenomesCount = genomesCount.get(animalGenome) + 1;
+            genomesCount.put(animalGenome, currentGenomesCount);
+            if (currentGenomesCount > mostGenomesCount)
+                mostGenomesCount = currentGenomesCount;
+        }
+
+        if (mostGenomesCount > 1)
+            for (var entry : genomesCount.entrySet())
+                if (entry.getValue() == mostGenomesCount)
+                    dominantGenomes.add(entry.getKey());
+    }
+
+    private void calculateAverageAnimalsEnergy() {
+        averageAnimalsEnergy = 0;
+        for (Animal animal : animals)
+            averageAnimalsEnergy += (float) animal.getEnergy() / animals.size();
+    }
+
+    private void calculateAverageAnimalsOffspringCount() {
+        averageAnimalsOffspringCount = 0;
+        for (Animal animal : animals)
+            averageAnimalsOffspringCount += (float) animal.getOffspringCount() / animals.size();
     }
 
     @Override
     public void run() {
-        long timer = System.currentTimeMillis();
-        announceEpochEnd();
-        for (int i = 0; i < 4000; i++) {
-            try {
-                Thread.sleep(5);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
-            destroyDeadAnimals();
-            moveAllAnimals();
-            eatGrasses();
-            makeCrossovers();
-            for (int j = 0; j < 1; j++) {
-                tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPosition(a, b));
-                tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPositionReversed(a, b));
-            }
+        try {
+            calculateDominantGenomes();
+            calculateAverageAnimalsEnergy();
             announceEpochEnd();
+            while (isAlive) {
+                while (!isStopped) {
+                    Thread.sleep(timeDelay);
+                    destroyDeadAnimals();
+                    moveAllAnimals();
+                    eatGrasses();
+                    makeCrossovers();
+                    calculateDominantGenomes();
+                    calculateAverageAnimalsEnergy();
+                    calculateAverageAnimalsOffspringCount();
+                    tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPosition(a, b));
+                    tryAddGrassInMap(a -> b -> map.getRandomUnoccupiedPositionReversed(a, b));
+                    announceEpochEnd();
+                }
+                Thread.sleep(100);
+            }
+        } catch (Exception e) {
+            Platform.runLater(() ->
+                    new Alert(Alert.AlertType.ERROR,
+                            "Error occurred." + System.lineSeparator() + e.getMessage())
+                            .showAndWait());
+        } finally {
+            epochEndObservers.clear();
+            epochEndGUIObservers.clear();
+            animals.forEach(Animal::destroy);
+            animals.clear();
+            grasses.forEach(Grass::destroy);
+            grasses.clear();
         }
-        System.out.println(System.currentTimeMillis() - timer);
-        for (Animal animal : animals)
-            System.out.println(animal.getGenome());
     }
 
     @Override
@@ -239,5 +347,35 @@ public class SimulationEngine implements Runnable, IOnEpochEndObservable {
     @Override
     public void removeObserver(IOnEpochEndInvokeObserver observer) {
         epochEndObservers.remove(observer);
+    }
+
+    @Override
+    public void addObserver(IOnEpochEndInvokeGUIObserver observer) {
+        epochEndGUIObservers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(IOnEpochEndInvokeGUIObserver observer) {
+        epochEndGUIObservers.remove(observer);
+    }
+
+    public void stopSimulation() {
+        isStopped = true;
+    }
+
+    public void resumeSimulation() {
+        isStopped = false;
+    }
+
+    public void killSimulation() {
+        isStopped = true;
+        isAlive = false;
+    }
+
+    public List<Vector2d> getAllDominantGenomesPositions() {
+        return animals.stream()
+                .filter(animal -> dominantGenomes.contains(animal.getGenome()))
+                .map(Animal::getPosition)
+                .toList();
     }
 }

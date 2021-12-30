@@ -1,8 +1,9 @@
 package agh.ics.oop.gui;
 
-import agh.ics.oop.maps.AbstractWorldMap;
 import agh.ics.oop.elements.AbstractWorldMapDynamicElement;
 import agh.ics.oop.elements.AbstractWorldMapElement;
+import agh.ics.oop.elements.Animal;
+import agh.ics.oop.maps.AbstractWorldMap;
 import agh.ics.oop.observers.*;
 import agh.ics.oop.structures.Vector2d;
 import agh.ics.oop.utility.Ensure;
@@ -24,12 +25,16 @@ public class WorldMapRenderer
         IDirectionChangeObserver,
         IOnDestroyInvokeObserver,
         IOnPlaceElementInvokeObserver,
-        IOnEpochEndInvokeObserver {
+        IOnEpochEndInvokeObserver,
+        IOnTileClickedObservable {
     private final AbstractWorldMap map;
     private final ResourcesLoader resourcesLoader;
     private GridPane grid;
+    private int tileSize;
     private final ImageView[][] elementsImage;
     private final Map<Vector2d, ImageName> tilesToUpdate;
+
+    private final List<IOnTileClickedEventObserver> onClickedObservers;
 
     public WorldMapRenderer (AbstractWorldMap map, ResourcesLoader resourcesLoader) {
         Ensure.Not.Null(map, "world map");
@@ -39,17 +44,19 @@ public class WorldMapRenderer
         this.resourcesLoader = resourcesLoader;
         elementsImage = new ImageView[map.size.y()][map.size.x()];
         tilesToUpdate = new HashMap<>();
+        onClickedObservers = new LinkedList<>();
     }
 
-    public GridPane createGrid(int fieldSize) {
+    public GridPane createGrid(int tileSize) {
+        this.tileSize = tileSize;
         grid = new GridPane();
 
         grid.setAlignment(Pos.CENTER);
 
         for (int i = 0; i < map.size.x(); i++)
-            grid.getColumnConstraints().add(new ColumnConstraints(fieldSize));
+            grid.getColumnConstraints().add(new ColumnConstraints(tileSize));
         for (int i = 0; i < map.size.y(); i++)
-            grid.getRowConstraints().add(new RowConstraints(fieldSize));
+            grid.getRowConstraints().add(new RowConstraints(tileSize));
 
         List<Node> nodesToAdd = new LinkedList<>();
 
@@ -60,11 +67,20 @@ public class WorldMapRenderer
                 ImageView tileGround = new ImageView(resourcesLoader.getImageOf(map.getImageNameOfTile(tilePosition)));
                 ImageView tileElement = new ImageView();
 
-                tileGround.setFitWidth(fieldSize);
+                tileGround.setFitWidth(tileSize);
                 tileGround.setPreserveRatio(true);
-                tileElement.setFitWidth(fieldSize);
+                tileElement.setFitWidth(tileSize);
                 tileElement.setPreserveRatio(true);
                 tileElement.setBlendMode(BlendMode.SRC_OVER);
+
+                tileElement.setOnMouseClicked(event -> {
+                    if (map.objectAt(tilePosition) instanceof Animal animal)
+                        onClickedObservers.forEach(observer -> Platform.runLater(() ->
+                                observer.onClicked(animal.getGenome().toString())));
+                    else
+                        onClickedObservers.forEach(observer -> Platform.runLater(() ->
+                                observer.onClicked("")));
+                });
 
                 elementsImage[tilePosition.y()][tilePosition.x()] = tileElement;
 
@@ -134,5 +150,19 @@ public class WorldMapRenderer
                 elementsImage[tile.getKey().y()][tile.getKey().x()]
                         .setImage(resourcesLoader.getImageOf(tile.getValue()));
         });
+    }
+
+    public int getTileSize() {
+        return tileSize;
+    }
+
+    @Override
+    public void addObserver(IOnTileClickedEventObserver observer) {
+        onClickedObservers.add(observer);
+    }
+
+    @Override
+    public void removeObserver(IOnTileClickedEventObserver observer) {
+        onClickedObservers.remove(observer);
     }
 }

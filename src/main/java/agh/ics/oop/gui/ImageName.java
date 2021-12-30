@@ -12,7 +12,8 @@ public enum ImageName {
     TILE_ANIMAL_SOUTH("AnimalSouth.png"),
     TILE_ANIMAL_SOUTH_WEST("AnimalSouthWest.png"),
     TILE_ANIMAL_WEST("AnimalWest.png"),
-    TILE_ANIMAL_NORTH_WEST("AnimalNorthWest.png");
+    TILE_ANIMAL_NORTH_WEST("AnimalNorthWest.png"),
+    TILE_HIGHLIGHTATION("Highlightation.png");
 
     public final String name;
 
